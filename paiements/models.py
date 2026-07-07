@@ -37,7 +37,7 @@ class Paiement(models.Model):
         db_table = 'paiements'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(montant__gte=0), name='chk_paiements_montant'
+                condition=models.Q(montant__gte=0), name='chk_paiements_montant'
             ),
         ]
 
