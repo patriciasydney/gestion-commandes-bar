@@ -1,0 +1,21 @@
+# Base de Données & Architecture POS
+
+## Contexte du Projet
+- **Application :** Gestion de Point de Vente (POS) pour débits de boissons (Licence 4).
+- **SGBD Cible :** PostgreSQL 15+.
+- **Fichiers de Référence :** `database/schema.sql`, `database/indexes_optimisation.sql`, `docs/dictionnaire_donnees.md`.
+
+## Règles de Conception SQL & Backend
+- **Identifiants (PK) :** Toujours utiliser `BIGSERIAL` (ou `BIGINT` pour les clés étrangères associées).
+- **Types Financiers :** Utiliser exclusivement `NUMERIC(10,2)` pour tous les prix, montants, totaux et remises. Interdiction stricte d'utiliser des `FLOAT` ou `REAL`.
+- **Gestion Temporelle :** Utiliser exclusivement `TIMESTAMPTZ` (Timestamp with time zone) pour garantir la gestion des fuseaux horaires sur les tickets et les ventes.
+- **Suppression Logique (FK) :** 
+  - `ON DELETE RESTRICT` sur les tables de référence (roles, categories, fournisseurs, utilisateurs, caisses, clients).
+  - `ON DELETE CASCADE` uniquement sur les tables de détails (detail_ventes, detail_achats, paiements).
+  - `ON DELETE SET NULL` pour le journal d'activité et les fournisseurs optionnels.
+
+## Règles d'Implémentation & Performance
+- **Recherches textuelles :** Pour les barres de recherche (produits, clients), utiliser l'extension `pg_trgm` avec des filtres `ILIKE` pour exploiter les index trigrammes mis en place.
+- **Calculs de totaux :** Les champs `sous_total` sont calculés et stockés par la base de données (`GENERATED ALWAYS AS ... STORED`). Ne jamais essayer de les insérer ou de les modifier manuellement via l'ORM ou les requêtes d'insertion.
+- **Transactions :** Toute opération créant une vente ou un achat doit impérativement encapsuler la mise à jour des stocks (`stocks.quantite_disponible`) et l'écriture dans `mouvements_stock` au sein d'une transaction SQL stricte (ACID) pour éviter les désynchronisations.
+- **Format de nommage :** Strictement en `snake_case` et en français pour tous les champs et tables de la base de données.
