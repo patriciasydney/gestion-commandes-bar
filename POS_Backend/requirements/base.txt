@@ -1,0 +1,9 @@
+# Django 5+ requis (GeneratedField pour detail_ventes / detail_achats)
+Django>=5.0,<7.0
+djangorestframework>=3.15,<4.0
+djangorestframework-simplejwt>=5.3,<6.0
+django-filter>=24.0
+django-cors-headers>=4.3,<5.0
+drf-spectacular>=0.27,<0.29
+psycopg2-binary>=2.9.9
+python-dotenv>=1.0.1
