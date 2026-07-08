@@ -80,3 +80,25 @@ dmypy.json
 
 # --- Dossiers résiduels locaux ---
 test_dsi/
+
+# --- Anciennes apps Django à la racine (migrées dans POS_Backend/apps/) ---
+/achats/
+/categories/
+/clients/
+/dashboard/
+/depenses/
+/fournisseurs/
+/notifications/
+/paiements/
+/pos_backend/
+/produits/
+/reports/
+/roles/
+/stocks/
+/utilisateurs/
+/ventes/
+/USERS/
+/smartreport_backend/
+/products/
+/suppliers/
+/customers/
