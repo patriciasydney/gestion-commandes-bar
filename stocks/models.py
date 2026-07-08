@@ -20,11 +20,11 @@ class Stock(models.Model):
         db_table = 'stocks'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(quantite_disponible__gte=0),
+                condition=models.Q(quantite_disponible__gte=0),
                 name='chk_stocks_quantite',
             ),
             models.CheckConstraint(
-                check=models.Q(seuil_alerte__gte=0),
+                condition=models.Q(seuil_alerte__gte=0),
                 name='chk_stocks_seuil',
             ),
         ]
@@ -77,7 +77,7 @@ class MouvementStock(models.Model):
         db_table = 'mouvements_stock'
         constraints = [
             models.CheckConstraint(
-                check=~models.Q(quantite=0),
+                condition=~models.Q(quantite=0),
                 name='chk_mouvements_quantite',
             ),
         ]

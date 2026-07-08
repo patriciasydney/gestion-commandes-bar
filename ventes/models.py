@@ -33,11 +33,11 @@ class Caisse(models.Model):
         db_table = 'caisses'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(montant_initial__gte=0),
+                condition=models.Q(montant_initial__gte=0),
                 name='chk_caisses_montant_initial',
             ),
             models.CheckConstraint(
-                check=models.Q(montant_final__isnull=True) | models.Q(montant_final__gte=0),
+                condition=models.Q(montant_final__isnull=True) | models.Q(montant_final__gte=0),
                 name='chk_caisses_montant_final',
             ),
         ]
@@ -87,10 +87,10 @@ class Vente(models.Model):
         db_table = 'ventes'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(montant_total__gte=0), name='chk_ventes_montant_total'
+                condition=models.Q(montant_total__gte=0), name='chk_ventes_montant_total'
             ),
             models.CheckConstraint(
-                check=models.Q(remise__gte=0), name='chk_ventes_remise'
+                condition=models.Q(remise__gte=0), name='chk_ventes_remise'
             ),
         ]
 
@@ -128,10 +128,10 @@ class DetailVente(models.Model):
         db_table = 'detail_ventes'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(quantite__gt=0), name='chk_detail_ventes_quantite'
+                condition=models.Q(quantite__gt=0), name='chk_detail_ventes_quantite'
             ),
             models.CheckConstraint(
-                check=models.Q(prix_unitaire__gte=0),
+                condition=models.Q(prix_unitaire__gte=0),
                 name='chk_detail_ventes_prix_unitaire',
             ),
         ]

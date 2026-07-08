@@ -21,7 +21,7 @@ class Depense(models.Model):
         db_table = 'depenses'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(montant__gte=0), name='chk_depenses_montant'
+                condition=models.Q(montant__gte=0), name='chk_depenses_montant'
             ),
         ]
 

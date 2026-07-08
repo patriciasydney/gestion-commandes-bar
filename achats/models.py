@@ -35,7 +35,7 @@ class Achat(models.Model):
         db_table = 'achats'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(montant_total__gte=0),
+                condition=models.Q(montant_total__gte=0),
                 name='chk_achats_montant_total',
             ),
         ]
@@ -80,10 +80,10 @@ class DetailAchat(models.Model):
         db_table = 'detail_achats'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(quantite__gt=0), name='chk_detail_achats_quantite'
+                condition=models.Q(quantite__gt=0), name='chk_detail_achats_quantite'
             ),
             models.CheckConstraint(
-                check=models.Q(prix_unitaire__gte=0),
+                condition=models.Q(prix_unitaire__gte=0),
                 name='chk_detail_achats_prix_unitaire',
             ),
         ]

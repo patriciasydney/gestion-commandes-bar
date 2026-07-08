@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from .models import Category
+from .models import Categorie
 
-class CategorySerializer(serializers.ModelSerializer):
+
+class CategorieSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
-        fields = '__all__'  # Expose tous les champs du modèle (id, nom, description)
+        model = Categorie
+        fields = '__all__'
