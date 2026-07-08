@@ -9,7 +9,17 @@ POS_BACKEND = os.path.join(os.path.dirname(os.path.abspath(__file__)), "POS_Back
 sys.path.insert(0, POS_BACKEND)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
 
-from django.core.management import execute_from_command_line  # noqa: E402
+
+def main():
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Django n'est pas installé. Activez le venv puis : "
+            "pip install -r requirements/development.txt"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
 
 if __name__ == "__main__":
-    execute_from_command_line(sys.argv)
+    main()
