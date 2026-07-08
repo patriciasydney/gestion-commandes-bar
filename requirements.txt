@@ -1,0 +1,2 @@
+# Backend POS — dépendances de développement
+-r POS_Backend/requirements/development.txt
