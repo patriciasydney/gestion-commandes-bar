@@ -1,5 +1,82 @@
-venv/
+# --- Python ---
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Environnement virtuel ---
+venv/
+.venv/
+env/
+ENV/
+
+# --- Django ---
+*.log
+local_settings.py
 db.sqlite3
+db.sqlite3-journal
+test_dsi.db
+staticfiles/
+media/
+
+# --- Variables d'environnement (secrets) ---
 .env
+.env.*
+!.env.example
+
+# --- Tests & couverture ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# --- IDE / éditeurs ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# --- OS ---
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+
+# --- MyPy / typage ---
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Dossiers résiduels locaux ---
+test_dsi/
