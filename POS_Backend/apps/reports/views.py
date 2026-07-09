@@ -2,6 +2,7 @@
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncDate
 from django.utils.dateparse import parse_date
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -10,6 +11,12 @@ from apps.depenses.models import Depense
 from apps.utilisateurs.permissions import IsGerantOrComptable
 from apps.ventes.models import DetailVente, Vente
 
+from .serializers import RapportDepensesSerializer, RapportProduitsSerializer, RapportVentesSerializer
+
+_PERIODE_PARAMS = [
+    OpenApiParameter(name="date_debut", type=str, description="Date début (YYYY-MM-DD)"),
+    OpenApiParameter(name="date_fin", type=str, description="Date fin (YYYY-MM-DD)"),
+]
 
 def _parse_periode(request):
     debut = parse_date(request.query_params.get("date_debut", ""))
@@ -17,6 +24,7 @@ def _parse_periode(request):
     return debut, fin
 
 
+@extend_schema(parameters=_PERIODE_PARAMS, responses=RapportVentesSerializer)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsGerantOrComptable])
 def rapport_ventes(request):
@@ -50,6 +58,7 @@ def rapport_ventes(request):
     )
 
 
+@extend_schema(parameters=_PERIODE_PARAMS, responses=RapportProduitsSerializer)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsGerantOrComptable])
 def rapport_produits(request):
@@ -80,6 +89,7 @@ def rapport_produits(request):
     )
 
 
+@extend_schema(parameters=_PERIODE_PARAMS, responses=RapportDepensesSerializer)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsGerantOrComptable])
 def rapport_depenses(request):

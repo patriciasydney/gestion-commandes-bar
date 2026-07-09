@@ -70,8 +70,26 @@ Pour consulter l'historique : `git show origin/<branche>:<chemin>`.
 
 ---
 
-## Prochaines étapes (Phase 2)
+## Phase 2 — RBAC, request.user, journal, tests
 
-- Appliquer les permissions Michel sur tous les ViewSets opérationnels
-- Propager `request.user` dans les serializers (ventes, achats, journal)
-- Tests d'intégration flux complet (vente + stock + paiement)
+- **Permissions RBAC** branchées sur tous les ViewSets via `RoleActionPermissionMixin`
+- **`request.user`** injecté automatiquement dans ventes, achats, dépenses, ajustements stock
+- **Journal d'activité** alimenté à chaque opération critique (`journal_activite/services.py`)
+- **Tests** : `apps/ventes/tests/test_flux_integration.py`, `apps/utilisateurs/tests/test_permissions.py`
+
+### Matrice des rôles (résumé)
+
+| Module | Lecture | Écriture |
+|---|---|---|
+| Utilisateurs / Rôles | Administrateur | Administrateur |
+| Catalogue (catégories, produits…) | StockReader / Gérant | Gérant (+ Admin pour suppressions) |
+| Ventes, caisses, paiements | VenteOperator | Caissier |
+| Achats | AchatOperator | Magasinier / Gérant |
+| Stocks | StockReader | Ajustement : Magasinier |
+| Dépenses | FinanceOperator | Comptable / Gérant |
+| Journal | JournalReader | — (écriture automatique) |
+| Dashboard / Rapports | Gérant / Comptable | — |
+
+---
+
+## Prochaines étapes (Phase 3)

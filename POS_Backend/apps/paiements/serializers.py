@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.db import transaction
 from rest_framework import serializers
 
+from apps.journal_activite.services import enregistrer_journal
 from apps.ventes.models import Vente
 
 from .models import Paiement
@@ -42,4 +43,9 @@ class PaiementSerializer(serializers.ModelSerializer):
             vente.statut = Vente.STATUT_VALIDEE
             vente.save(update_fields=["statut"])
 
+        enregistrer_journal(
+            self.context.get("request"),
+            "paiement.create",
+            f"Paiement {paiement.montant} sur vente {vente.reference}",
+        )
         return paiement

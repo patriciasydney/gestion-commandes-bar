@@ -82,6 +82,65 @@ class IsGerantOrComptable(BaseRolePermission):
     allowed_roles = (RoleNames.ADMINISTRATEUR, RoleNames.GERANT, RoleNames.COMPTABLE)
 
 
+class IsVenteOperator(BaseRolePermission):
+    """Ventes, caisses — caissier, serveur, gérant, administrateur."""
+    allowed_roles = (
+        RoleNames.ADMINISTRATEUR,
+        RoleNames.GERANT,
+        RoleNames.CAISSIER,
+        RoleNames.SERVEUR,
+    )
+
+
+class IsAchatOperator(BaseRolePermission):
+    """Achats et réceptions fournisseur."""
+    allowed_roles = (
+        RoleNames.ADMINISTRATEUR,
+        RoleNames.GERANT,
+        RoleNames.MAGASINIER,
+    )
+
+
+class IsStockReader(BaseRolePermission):
+    """Consultation des stocks et mouvements."""
+    allowed_roles = (
+        RoleNames.ADMINISTRATEUR,
+        RoleNames.GERANT,
+        RoleNames.MAGASINIER,
+        RoleNames.CAISSIER,
+        RoleNames.SERVEUR,
+        RoleNames.COMPTABLE,
+    )
+
+
+class IsPaiementReader(BaseRolePermission):
+    """Consultation des paiements."""
+    allowed_roles = (
+        RoleNames.ADMINISTRATEUR,
+        RoleNames.GERANT,
+        RoleNames.CAISSIER,
+        RoleNames.COMPTABLE,
+    )
+
+
+class IsFinanceOperator(BaseRolePermission):
+    """Dépenses et suivi financier."""
+    allowed_roles = (
+        RoleNames.ADMINISTRATEUR,
+        RoleNames.GERANT,
+        RoleNames.COMPTABLE,
+    )
+
+
+class IsJournalReader(BaseRolePermission):
+    """Lecture du journal d'activité."""
+    allowed_roles = (
+        RoleNames.ADMINISTRATEUR,
+        RoleNames.GERANT,
+        RoleNames.COMPTABLE,
+    )
+
+
 class IsOwnerOrAdmin(BasePermission):
     message = "Vous ne pouvez accéder qu'à vos propres ressources."
 

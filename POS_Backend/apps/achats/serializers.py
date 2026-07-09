@@ -3,8 +3,10 @@ from decimal import Decimal
 from django.db import transaction
 from rest_framework import serializers
 
+from apps.journal_activite.services import enregistrer_journal
 from apps.produits.models import Produit
 from apps.stocks.models import MouvementStock, Stock
+from apps.utils.fields import MontantDecimalField
 
 from .models import Achat, DetailAchat
 
@@ -12,10 +14,12 @@ from .models import Achat, DetailAchat
 class DetailAchatInputSerializer(serializers.Serializer):
     produit = serializers.PrimaryKeyRelatedField(queryset=Produit.objects.all())
     quantite = serializers.IntegerField(min_value=1)
-    prix_unitaire = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    prix_unitaire = MontantDecimalField(min_value=0)
 
 
 class DetailAchatSerializer(serializers.ModelSerializer):
+    sous_total = MontantDecimalField(read_only=True)
+
     class Meta:
         model = DetailAchat
         fields = ["id_detail", "produit", "quantite", "prix_unitaire", "sous_total"]
@@ -44,7 +48,7 @@ class AchatCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Achat
-        fields = ["fournisseur", "utilisateur", "details"]
+        fields = ["fournisseur", "details"]
 
     def validate(self, attrs):
         if not attrs.get("details"):
@@ -53,8 +57,18 @@ class AchatCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        request = self.context.get("request")
+        if request is None or not request.user.is_authenticated:
+            raise serializers.ValidationError(
+                {"detail": "Authentification requise pour enregistrer un achat."}
+            )
+
         details_data = validated_data.pop("details")
-        achat = Achat.objects.create(montant_total=0, **validated_data)
+        achat = Achat.objects.create(
+            montant_total=0,
+            utilisateur=request.user,
+            **validated_data,
+        )
 
         montant_total = Decimal("0")
         for line in details_data:
@@ -85,6 +99,12 @@ class AchatCreateSerializer(serializers.ModelSerializer):
 
         achat.montant_total = montant_total
         achat.save(update_fields=["montant_total"])
+
+        enregistrer_journal(
+            request,
+            "achat.create",
+            f"Achat #{achat.id_achat} — total {achat.montant_total}",
+        )
         return achat
 
 
@@ -115,4 +135,12 @@ class AchatAnnulationSerializer(serializers.Serializer):
 
         achat.statut = Achat.STATUT_ANNULE
         achat.save(update_fields=["statut"])
+
+        request = self.context.get("achat_request")
+        if request:
+            enregistrer_journal(
+                request,
+                "achat.annuler",
+                f"Annulation achat #{achat.id_achat}",
+            )
         return achat

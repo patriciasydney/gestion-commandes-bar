@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from apps.utilisateurs.models import Utilisateur
+from apps.journal_activite.services import enregistrer_journal
 
 from .models import MouvementStock, Stock
 
@@ -39,7 +39,6 @@ class MouvementStockSerializer(serializers.ModelSerializer):
 
 class AjustementStockSerializer(serializers.Serializer):
     quantite = serializers.IntegerField()
-    utilisateur = serializers.PrimaryKeyRelatedField(queryset=Utilisateur.objects.all())
     reference_operation = serializers.CharField(required=False, allow_blank=True)
 
     def validate_quantite(self, value):
@@ -51,8 +50,15 @@ class AjustementStockSerializer(serializers.Serializer):
 
     @transaction.atomic
     def save(self, **kwargs):
+        request = self.context.get("request")
+        if request is None or not request.user.is_authenticated:
+            raise serializers.ValidationError(
+                {"detail": "Authentification requise pour ajuster le stock."}
+            )
+
         stock = self.context["stock"]
         quantite = self.validated_data["quantite"]
+        utilisateur = request.user
 
         stock = Stock.objects.select_for_update().get(pk=stock.pk)
         nouvelle_quantite = stock.quantite_disponible + quantite
@@ -68,7 +74,13 @@ class AjustementStockSerializer(serializers.Serializer):
             produit=stock.produit,
             type_mouvement=MouvementStock.TYPE_AJUSTEMENT,
             quantite=quantite,
-            utilisateur=self.validated_data["utilisateur"],
+            utilisateur=utilisateur,
             reference_operation=self.validated_data.get("reference_operation", ""),
+        )
+
+        enregistrer_journal(
+            request,
+            "stock.ajuster",
+            f"Produit #{stock.produit_id} : {quantite:+d} (stock={stock.quantite_disponible})",
         )
         return stock

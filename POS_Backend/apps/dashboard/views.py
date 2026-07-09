@@ -1,6 +1,7 @@
 # Intégré depuis la branche Sindiely (Laetitia) — module Dashboard §5.14
 from django.db.models import Count, Sum
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -10,7 +11,10 @@ from apps.stocks.models import Stock
 from apps.utilisateurs.permissions import IsGerantOrComptable
 from apps.ventes.models import Vente
 
+from .serializers import DashboardSummarySerializer
 
+
+@extend_schema(responses=DashboardSummarySerializer)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsGerantOrComptable])
 def dashboard_summary(request):

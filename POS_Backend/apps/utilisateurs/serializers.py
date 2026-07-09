@@ -71,3 +71,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["role"] = user.role.nom_role if user.role else None
         token["statut"] = user.statut
         return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data["utilisateur"] = UtilisateurSerializer(self.user).data
+        return data
