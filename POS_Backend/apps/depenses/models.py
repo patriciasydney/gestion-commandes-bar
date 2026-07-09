@@ -19,12 +19,8 @@ class Depense(models.Model):
         db_table = "depenses"
         constraints = [
             models.CheckConstraint(
-<<<<<<< HEAD:depenses/models.py
-                condition=models.Q(montant__gte=0), name='chk_depenses_montant'
-=======
                 condition=models.Q(montant__gte=0),
                 name="chk_depenses_montant",
->>>>>>> 08c1517 (Itegration d'equipe phase 1):POS_Backend/apps/depenses/models.py
             ),
         ]
 

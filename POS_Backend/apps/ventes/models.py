@@ -29,13 +29,6 @@ class Caisse(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(montant_initial__gte=0),
-<<<<<<< HEAD:ventes/models.py
-                name='chk_caisses_montant_initial',
-            ),
-            models.CheckConstraint(
-                condition=models.Q(montant_final__isnull=True) | models.Q(montant_final__gte=0),
-                name='chk_caisses_montant_final',
-=======
                 name="chk_caisses_montant_initial",
             ),
             models.CheckConstraint(
@@ -50,7 +43,6 @@ class Caisse(models.Model):
             models.CheckConstraint(
                 condition=models.Q(statut__in=["ouverte", "fermee"]),
                 name="chk_caisses_statut",
->>>>>>> 08c1517 (Itegration d'equipe phase 1):POS_Backend/apps/ventes/models.py
             ),
         ]
 
@@ -100,12 +92,6 @@ class Vente(models.Model):
         db_table = "ventes"
         constraints = [
             models.CheckConstraint(
-<<<<<<< HEAD:ventes/models.py
-                condition=models.Q(montant_total__gte=0), name='chk_ventes_montant_total'
-            ),
-            models.CheckConstraint(
-                condition=models.Q(remise__gte=0), name='chk_ventes_remise'
-=======
                 condition=models.Q(montant_total__gte=0),
                 name="chk_ventes_montant_total",
             ),
@@ -116,7 +102,6 @@ class Vente(models.Model):
             models.CheckConstraint(
                 condition=models.Q(statut__in=["en_attente", "validee", "annulee"]),
                 name="chk_ventes_statut",
->>>>>>> 08c1517 (Itegration d'equipe phase 1):POS_Backend/apps/ventes/models.py
             ),
         ]
 
@@ -151,20 +136,12 @@ class DetailVente(models.Model):
         db_table = "detail_ventes"
         constraints = [
             models.CheckConstraint(
-<<<<<<< HEAD:ventes/models.py
-                condition=models.Q(quantite__gt=0), name='chk_detail_ventes_quantite'
-            ),
-            models.CheckConstraint(
-                condition=models.Q(prix_unitaire__gte=0),
-                name='chk_detail_ventes_prix_unitaire',
-=======
                 condition=models.Q(quantite__gt=0),
                 name="chk_detail_ventes_quantite",
             ),
             models.CheckConstraint(
                 condition=models.Q(prix_unitaire__gte=0),
                 name="chk_detail_ventes_prix_unitaire",
->>>>>>> 08c1517 (Itegration d'equipe phase 1):POS_Backend/apps/ventes/models.py
             ),
         ]
 
