@@ -41,3 +41,16 @@ class RapportDepensesSerializer(serializers.Serializer):
     periode = PeriodeSerializer()
     total_depenses = MontantDecimalField()
     par_categorie = DepenseCategorieSerializer(many=True)
+
+
+class AchatFournisseurSerializer(serializers.Serializer):
+    fournisseur__raison_sociale = serializers.CharField()
+    total_fournisseur = MontantDecimalField()
+    nombre_achats = serializers.IntegerField()
+
+
+class RapportAchatsSerializer(serializers.Serializer):
+    periode = PeriodeSerializer()
+    total_achats = MontantDecimalField()
+    nombre_achats = serializers.IntegerField()
+    par_fournisseur = AchatFournisseurSerializer(many=True)

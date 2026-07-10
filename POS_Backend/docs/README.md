@@ -82,6 +82,11 @@ Voir aussi : [INTEGRATION_EQUIPE.md](./INTEGRATION_EQUIPE.md)
 | `/api/depenses/` | depenses |
 | `/api/journal-activite/` | journal_activite |
 | `/api/dashboard/summary/` | dashboard (Sindiely) |
-| `/api/reports/ventes/`, `/produits/`, `/depenses/` | reports (Sindiely) |
+| `/api/reports/ventes/`, `/produits/`, `/depenses/`, `/achats/` | reports (Sindiely) |
 | `/api/notifications/` | notifications (Sindiely) |
 | `/api/docs/`, `/api/schema/` | Swagger OpenAPI |
+
+## Intégration Flutter
+
+- [FRONTEND_INTEGRATION.md](./FRONTEND_INTEGRATION.md) — contrats API, flux POS, mapping JSON
+- [E2E_CHECKLIST.md](./E2E_CHECKLIST.md) — checklist manuelle login → vente → rapport

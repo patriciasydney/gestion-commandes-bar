@@ -1,0 +1,566 @@
+========== models/client.dart ==========
+// ============================================================================
+// Modèle Client — reflète la table correspondante de schema.sql (PostgreSQL)
+// Traduit le JSON renvoyé par l'API Django REST en objet Dart typé, et inversement.
+// ============================================================================
+class Client {
+  final int idClient;
+  final String nom;
+  final String? prenom;
+  final String? telephone;
+  final String? email;
+  final String? adresse;
+  final bool actif;
+
+  Client({
+    required this.idClient,
+    required this.nom,
+    this.prenom,
+    this.telephone,
+    this.email,
+    this.adresse,
+    required this.actif
+  });
+
+  /// Construit un Client à partir du JSON renvoyé par l'API.
+  factory Client.fromJson(Map<String, dynamic> json) {
+    return Client(
+      idClient: json['id_client'] is int ? json['id_client'] as int : int.parse(json['id_client'].toString()),
+      nom: json['nom'].toString(),
+      prenom: json['prenom']?.toString(),
+      telephone: json['telephone']?.toString(),
+      email: json['email']?.toString(),
+      adresse: json['adresse']?.toString(),
+      actif: json['actif'] as bool
+    );
+  }
+
+  /// Transforme ce Client en JSON pour l'envoyer à l'API (POST/PUT).
+  Map<String, dynamic> toJson() {
+    return {
+      'id_client': idClient,
+      'nom': nom,
+      'prenom': prenom,
+      'telephone': telephone,
+      'email': email,
+      'adresse': adresse,
+      'actif': actif
+    };
+  }
+}
+
+========== services/client_service.dart ==========
+import '../core/constants/api_constants.dart';
+import '../models/client.dart';
+import 'api_service.dart';
+
+/// Appels CRUD vers l'API Django pour Client.
+class ClientService {
+  final ApiService _api = ApiService();
+
+  Future<List<Client>> getAll() async {
+    final data = await _api.get(ApiConstants.clients);
+    return (data as List).map((json) => Client.fromJson(json)).toList();
+  }
+
+  Future<Client> getById(int id) async {
+    final data = await _api.get('${ApiConstants.clients}$id/');
+    return Client.fromJson(data);
+  }
+
+  Future<Client> create(Client item) async {
+    final data = await _api.post(ApiConstants.clients, item.toJson());
+    return Client.fromJson(data);
+  }
+
+  Future<Client> update(int id, Client item) async {
+    final data = await _api.put('${ApiConstants.clients}$id/', item.toJson());
+    return Client.fromJson(data);
+  }
+
+  Future<void> delete(int id) async {
+    await _api.delete('${ApiConstants.clients}$id/');
+  }
+}
+
+========== screens/clients/clients_screen.dart ==========
+import 'package:flutter/material.dart';
+import '../../widgets/common/app_drawer.dart';
+import '../../widgets/common/app_bottom_nav.dart'; // L'import est déjà présent, c'est parfait
+
+/// Écran : Gestion des clients — cahier des charges §5.7
+/// TODO : brancher sur l'API Django une fois les routes backend connues.
+class ClientsScreen extends StatelessWidget {
+  const ClientsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Gestion des clients")),
+      drawer: const AppDrawer(),
+      
+      // 👇 AJOUTE CETTE LIGNE POUR AFFICHER LES ICONES DU BAS 👇
+      bottomNavigationBar: const AppBottomNav(currentRoute: '/clients'),
+      
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.construction, size: 48, color: Colors.orange),
+            const SizedBox(height: 16),
+            Text(
+              'Gestion des clients',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Écran en construction. Reste à faire :',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            Text("• Liste des clients réguliers"),
+            const SizedBox(height: 6),
+            Text("• Recherche"),
+            const SizedBox(height: 6),
+            Text("• Historique d'achats"),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+========== screens/fournisseurs/fournisseurs_screen.dart (ref) ==========
+import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/utils/validators.dart';
+import '../../models/fournisseur.dart';
+import '../../services/fournisseur_service.dart';
+import '../../widgets/common/app_drawer.dart';
+import '../../widgets/common/app_bottom_nav.dart';
+
+/// Écran : Gestion des fournisseurs — cahier des charges §5.6
+class FournisseursScreen extends StatefulWidget {
+  const FournisseursScreen({super.key});
+
+  @override
+  State<FournisseursScreen> createState() => _FournisseursScreenState();
+}
+
+class _FournisseursScreenState extends State<FournisseursScreen> {
+  final FournisseurService _service = FournisseurService();
+  List<Fournisseur> _fournisseurs = [];
+  bool _chargement = true;
+  String? _erreur;
+
+  @override
+  void initState() {
+    super.initState();
+    _charger();
+  }
+
+  Future<void> _charger() async {
+    setState(() { _chargement = true; _erreur = null; });
+    try {
+      _fournisseurs = await _service.getAll();
+    } catch (e) {
+      _erreur = "Impossible de charger les fournisseurs (backend non branché ?)";
+    }
+    if (mounted) setState(() => _chargement = false);
+  }
+
+  Future<void> _ouvrirFormulaire({Fournisseur? fournisseur}) async {
+    final formKey = GlobalKey<FormState>();
+    final raisonCtrl = TextEditingController(text: fournisseur?.raisonSociale ?? '');
+    final telCtrl = TextEditingController(text: fournisseur?.telephone ?? '');
+    final emailCtrl = TextEditingController(text: fournisseur?.email ?? '');
+    final adresseCtrl = TextEditingController(text: fournisseur?.adresse ?? '');
+    bool actif = fournisseur?.actif ?? true;
+
+    final resultat = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: Text(fournisseur == null ? 'Nouveau fournisseur' : 'Modifier le fournisseur'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: raisonCtrl,
+                    decoration: const InputDecoration(labelText: 'Raison sociale'),
+                    validator: (v) => Validators.requis(v, champ: 'La raison sociale'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: telCtrl,
+                    decoration: const InputDecoration(labelText: 'Téléphone (optionnel)'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: emailCtrl,
+                    decoration: const InputDecoration(labelText: 'Email (optionnel)'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: adresseCtrl,
+                    decoration: const InputDecoration(labelText: 'Adresse (optionnel)'),
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Actif'),
+                    value: actif,
+                    onChanged: (v) => setStateDialog(() => actif = v),
+                    activeThumbColor: AppColors.vert,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) Navigator.pop(context, true);
+              },
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (resultat != true || !mounted) return;
+
+    final nouveau = Fournisseur(
+      idFournisseur: fournisseur?.idFournisseur ?? 0,
+      raisonSociale: raisonCtrl.text.trim(),
+      telephone: telCtrl.text.trim().isEmpty ? null : telCtrl.text.trim(),
+      email: emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(),
+      adresse: adresseCtrl.text.trim().isEmpty ? null : adresseCtrl.text.trim(),
+      actif: actif,
+    );
+
+    try {
+      if (fournisseur != null) {
+        await _service.update(fournisseur.idFournisseur, nouveau);
+      } else {
+        await _service.create(nouveau);
+      }
+      await _charger();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur : $e'), backgroundColor: AppColors.rouge),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmerSuppression(Fournisseur fournisseur) async {
+    final confirme = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer ce fournisseur ?'),
+        content: Text('« ${fournisseur.raisonSociale} » sera définitivement supprimé.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Supprimer', style: TextStyle(color: AppColors.rouge)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirme != true) return;
+
+    try {
+      await _service.delete(fournisseur.idFournisseur);
+      await _charger();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur : $e'), backgroundColor: AppColors.rouge),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Gestion des fournisseurs')),
+      drawer: const AppDrawer(),
+      bottomNavigationBar: const AppBottomNav(currentRoute: '/fournisseurs'),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _ouvrirFormulaire(),
+        icon: const Icon(Icons.add),
+        label: const Text('Ajouter'),
+        backgroundColor: AppColors.orange,
+      ),
+      body: Builder(builder: (context) {
+        if (_chargement) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (_erreur != null) {
+          return Center(child: Text(_erreur!, style: const TextStyle(color: AppColors.rouge)));
+        }
+        if (_fournisseurs.isEmpty) {
+          return const Center(child: Text('Aucun fournisseur', style: TextStyle(color: AppColors.texteClair)));
+        }
+        return RefreshIndicator(
+          onRefresh: _charger,
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+            itemCount: _fournisseurs.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
+            itemBuilder: (context, i) {
+              final f = _fournisseurs[i];
+              return Card(
+                margin: EdgeInsets.zero,
+                child: ListTile(
+                  onTap: () => _ouvrirFormulaire(fournisseur: f),
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.orange.withValues(alpha: 0.12),
+                    child: const Icon(Icons.local_shipping_outlined, color: AppColors.orange),
+                  ),
+                  title: Text(f.raisonSociale, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text([if (f.telephone != null) f.telephone!, if (f.email != null) f.email!].join(' · ')),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: AppColors.rouge),
+                    onPressed: () => _confirmerSuppression(f),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      }),
+    );
+  }
+}
+
+========== routes/app_routes.dart ==========
+import 'package:flutter/material.dart';
+import '../screens/auth/login_screen.dart';
+import '../screens/dashboard/dashboard_screen.dart';
+import '../screens/pos/pos_screen.dart';
+import '../screens/produits/produits_screen.dart';
+import '../screens/produits/produit_form_screen.dart';
+import '../screens/categories/categories_screen.dart';
+import '../screens/stocks/stocks_screen.dart';
+import '../screens/fournisseurs/fournisseurs_screen.dart';
+import '../screens/clients/clients_screen.dart';
+import '../screens/achats/achats_screen.dart';
+import '../screens/depenses/depenses_screen.dart';
+import '../screens/utilisateurs/utilisateurs_screen.dart';
+import '../screens/rapports/rapports_screen.dart';
+import '../screens/parametres/parametres_screen.dart';
+
+/// Table de routage nommée de l'application.
+class AppRoutes {
+  AppRoutes._();
+
+  static const String login = '/login';
+  static const String dashboard = '/dashboard';
+  static const String pos = '/pos';
+  static const String produits = '/produits';
+  static const String produitForm = '/produits/form';
+  static const String categories = '/categories';
+  static const String stocks = '/stocks';
+  static const String fournisseurs = '/fournisseurs';
+  static const String clients = '/clients';
+  static const String achats = '/achats';
+  static const String depenses = '/depenses';
+  static const String utilisateurs = '/utilisateurs';
+  static const String rapports = '/rapports';
+  static const String parametres = '/parametres';
+
+  static Map<String, WidgetBuilder> get routes => {
+        login: (context) => const LoginScreen(),
+        dashboard: (context) => const DashboardScreen(),
+        pos: (context) => const PosScreen(),
+        produits: (context) => const ProduitsScreen(),
+        produitForm: (context) => const ProduitFormScreen(),
+        categories: (context) => const CategoriesScreen(),
+        stocks: (context) => const StocksScreen(),
+        fournisseurs: (context) => const FournisseursScreen(),
+        clients: (context) => const ClientsScreen(),
+        achats: (context) => const AchatsScreen(),
+        depenses: (context) => const DepensesScreen(),
+        utilisateurs: (context) => const UtilisateursScreen(),
+        rapports: (context) => const RapportsScreen(),
+        parametres: (context) => const ParametresScreen(),
+      };
+}
+
+========== services/vente_service.dart ==========
+import '../core/constants/api_constants.dart';
+import '../models/detail_vente.dart';
+import '../models/paiement.dart';
+import '../models/vente.dart';
+import 'api_service.dart';
+import 'detail_vente_service.dart';
+import 'paiement_service.dart';
+
+/// Un article de la vente en cours, tel que fourni par le panier (POS).
+class LigneVente {
+  final int idProduit;
+  final int quantite;
+  final double prixUnitaire;
+
+  LigneVente({required this.idProduit, required this.quantite, required this.prixUnitaire});
+
+  double get sousTotal => prixUnitaire * quantite;
+}
+
+/// Appels CRUD vers l'API Django pour Vente.
+class VenteService {
+  final ApiService _api = ApiService();
+  final DetailVenteService _detailService = DetailVenteService();
+  final PaiementService _paiementService = PaiementService();
+
+  Future<List<Vente>> getAll() async {
+    final data = await _api.get(ApiConstants.ventes);
+    return (data as List).map((json) => Vente.fromJson(json)).toList();
+  }
+
+  Future<Vente> getById(int id) async {
+    final data = await _api.get('${ApiConstants.ventes}$id/');
+    return Vente.fromJson(data);
+  }
+
+  Future<Vente> create(Vente item) async {
+    final data = await _api.post(ApiConstants.ventes, item.toJson());
+    return Vente.fromJson(data);
+  }
+
+  Future<Vente> update(int id, Vente item) async {
+    final data = await _api.put('${ApiConstants.ventes}$id/', item.toJson());
+    return Vente.fromJson(data);
+  }
+
+  Future<void> delete(int id) async {
+    await _api.delete('${ApiConstants.ventes}$id/');
+  }
+
+  /// Enregistre une vente complète depuis le POS (§10.4) :
+  /// 1. crée l'en-tête Vente
+  /// 2. crée une DetailVente par article du panier
+  /// 3. crée le Paiement associé
+  ///
+  /// Les champs `reference`/`dateVente`/`idVente` passés ici sont des
+  /// valeurs provisoires : le backend (ou le mock) les régénère à la création.
+  Future<Vente> creerVenteComplete({
+    required List<LigneVente> lignes,
+    required double remise,
+    required int idUtilisateur,
+    required int idCaisse,
+    int? idClient,
+    required String modePaiement,
+    String? referenceTransaction,
+  }) async {
+    final montantTotal = lignes.fold<double>(0, (s, l) => s + l.sousTotal) - remise;
+
+    final venteProvisoire = Vente(
+      idVente: 0,
+      reference: '',
+      dateVente: DateTime.now(),
+      montantTotal: montantTotal,
+      remise: remise,
+      statut: 'validee',
+      idUtilisateur: idUtilisateur,
+      idClient: idClient,
+      idCaisse: idCaisse,
+    );
+
+    final vente = await create(venteProvisoire);
+
+    for (final ligne in lignes) {
+      await _detailService.create(DetailVente(
+        idDetail: 0,
+        idVente: vente.idVente,
+        idProduit: ligne.idProduit,
+        quantite: ligne.quantite,
+        prixUnitaire: ligne.prixUnitaire,
+        sousTotal: ligne.sousTotal,
+      ));
+    }
+
+    await _paiementService.create(Paiement(
+      idPaiement: 0,
+      idVente: vente.idVente,
+      modePaiement: modePaiement,
+      montant: montantTotal,
+      referenceTransaction: referenceTransaction,
+      datePaiement: DateTime.now(),
+    ));
+
+    return vente;
+  }
+}
+
+========== models/vente.dart ==========
+// ============================================================================
+// Modèle Vente — reflète la table correspondante de schema.sql (PostgreSQL)
+// Traduit le JSON renvoyé par l'API Django REST en objet Dart typé, et inversement.
+// ============================================================================
+class Vente {
+  final int idVente;
+  final String reference;
+  final DateTime dateVente;
+  final double montantTotal;
+  final double remise;
+  final String statut;
+  final int idUtilisateur;
+  final int? idClient;
+  final int idCaisse;
+
+  Vente({
+    required this.idVente,
+    required this.reference,
+    required this.dateVente,
+    required this.montantTotal,
+    required this.remise,
+    required this.statut,
+    required this.idUtilisateur,
+    this.idClient,
+    required this.idCaisse
+  });
+
+  /// Construit un Vente à partir du JSON renvoyé par l'API.
+  factory Vente.fromJson(Map<String, dynamic> json) {
+    return Vente(
+      idVente: json['id_vente'] is int ? json['id_vente'] as int : int.parse(json['id_vente'].toString()),
+      reference: json['reference'].toString(),
+      dateVente: DateTime.parse(json['date_vente'].toString()),
+      montantTotal: double.parse(json['montant_total'].toString()),
+      remise: double.parse(json['remise'].toString()),
+      statut: json['statut'].toString(),
+      idUtilisateur: json['id_utilisateur'] is int ? json['id_utilisateur'] as int : int.parse(json['id_utilisateur'].toString()),
+      idClient: json['id_client'] is int ? json['id_client'] as int : int.tryParse(json['id_client'].toString()),
+      idCaisse: json['id_caisse'] is int ? json['id_caisse'] as int : int.parse(json['id_caisse'].toString())
+    );
+  }
+
+  /// Transforme ce Vente en JSON pour l'envoyer à l'API (POST/PUT).
+  Map<String, dynamic> toJson() {
+    return {
+      'id_vente': idVente,
+      'reference': reference,
+      'date_vente': dateVente.toIso8601String(),
+      'montant_total': montantTotal,
+      'remise': remise,
+      'statut': statut,
+      'id_utilisateur': idUtilisateur,
+      'id_client': idClient,
+      'id_caisse': idCaisse
+    };
+  }
+}
