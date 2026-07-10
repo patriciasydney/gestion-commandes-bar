@@ -1,0 +1,161 @@
+/// URL de base de l'API Django REST Framework.
+/// À adapter une fois le backend déployé (ex: https://sport.services-ztf.com/api).
+class ApiConstants {
+  ApiConstants._();
+
+  /// true tant que le backend Django n'est pas branché : toutes les
+  /// requêtes passent par MockApi au lieu d'un vrai appel HTTP.
+  /// À repasser à false une fois le backend réel disponible.
+  static const bool modeDemo = true;
+
+  static const String baseUrl = "http://localhost:8000/api";
+
+  // Endpoints — à ajuster une fois les routes Django connues.
+  static const String login = "/auth/login/";
+  static const String produits = "/produits/";
+  static const String categories = "/categories/";
+  static const String fournisseurs = "/fournisseurs/";
+  static const String clients = "/clients/";
+  static const String stocks = "/stocks/";
+  static const String mouvementsStock = "/mouvements-stock/";
+  static const String ventes = "/ventes/";
+  static const String detailsVente = "/details-vente/";
+  static const String paiements = "/paiements/";
+  static const String achats = "/achats/";
+  static const String depenses = "/depenses/";
+  static const String caisses = "/caisses/";
+  static const String utilisateurs = "/utilisateurs/";
+  static const String roles = "/roles/";
+  static const String dashboard = "/dashboard/";
+  static const String rapports = "/rapports/";
+}
+import 'package:flutter/material.dart';
+
+/// Palette de couleurs officielle du projet (cahier des charges §10.1).
+class AppColors {
+  AppColors._();
+
+  static const Color bleuFonce = Color(0xFF0D1B4C); // navigation, en-têtes
+  static const Color orange    = Color(0xFFFF7A00); // actions principales
+  static const Color vert      = Color(0xFF2ECC71); // validation
+  static const Color jaune     = Color(0xFFF1C40F); // alerte
+  static const Color rouge     = Color(0xFFE74C3C); // erreur
+  static const Color fond      = Color(0xFFF5F6FA); // fond général
+  static const Color texte     = Color(0xFF1C1C1E); // texte principal
+  static const Color texteClair = Color(0xFF8E8E93); // texte secondaire
+}
+import 'package:flutter/material.dart';
+import 'app_colors.dart';
+
+/// Thème global de l'application, appliqué une seule fois dans main.dart.
+class AppTheme {
+  AppTheme._();
+
+  static ThemeData get theme {
+    return ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: AppColors.fond,
+      primaryColor: AppColors.bleuFonce,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.bleuFonce,
+        primary: AppColors.bleuFonce,
+        secondary: AppColors.orange,
+        error: AppColors.rouge,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.bleuFonce,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.orange,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 1,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(fontWeight: FontWeight.bold, color: AppColors.texte),
+        bodyMedium: TextStyle(color: AppColors.texte),
+      ),
+    );
+  }
+}
+import 'package:intl/intl.dart' as intl;
+
+/// Fonctions de formatage réutilisées dans toute l'application.
+class Formatters {
+  Formatters._();
+
+  /// Formate un montant en FCFA, ex : 1500 -> "1 500 FCFA"
+  static String montant(num valeur) {
+    final formatter = intl.NumberFormat('#,##0', 'fr_FR');
+    return "${formatter.format(valeur)} FCFA";
+  }
+
+  /// Formate une date, ex : 2026-07-07 -> "07/07/2026"
+  static String date(DateTime date) {
+    return intl.DateFormat('dd/MM/yyyy').format(date);
+  }
+
+  /// Formate une date + heure, ex : "07/07/2026 14:30"
+  static String dateHeure(DateTime date) {
+    return intl.DateFormat('dd/MM/yyyy HH:mm').format(date);
+  }
+
+  /// Formate une durée écoulée depuis [date], ex : "il y a 12 min"
+  static String tempsRelatif(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inMinutes < 1) return "à l'instant";
+    if (diff.inMinutes < 60) return "il y a ${diff.inMinutes} min";
+    if (diff.inHours < 24) return "il y a ${diff.inHours} h";
+    return "il y a ${diff.inDays} j";
+  }
+}
+/// Validateurs réutilisables pour les formulaires (Form + TextFormField).
+class Validators {
+  Validators._();
+
+  static String? requis(String? valeur, {String champ = "Ce champ"}) {
+    if (valeur == null || valeur.trim().isEmpty) {
+      return "$champ est requis";
+    }
+    return null;
+  }
+
+  static String? email(String? valeur) {
+    if (valeur == null || valeur.trim().isEmpty) return "L'email est requis";
+    final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (!regex.hasMatch(valeur)) return "Email invalide";
+    return null;
+  }
+
+  static String? motDePasse(String? valeur) {
+    if (valeur == null || valeur.isEmpty) return "Le mot de passe est requis";
+    if (valeur.length < 6) return "6 caractères minimum";
+    return null;
+  }
+
+  static String? nombrePositif(String? valeur, {String champ = "La valeur"}) {
+    if (valeur == null || valeur.trim().isEmpty) return "$champ est requis";
+    final n = num.tryParse(valeur);
+    if (n == null) return "$champ doit être un nombre";
+    if (n < 0) return "$champ doit être positif";
+    return null;
+  }
+}

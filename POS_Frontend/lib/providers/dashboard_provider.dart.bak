@@ -1,0 +1,36 @@
+import 'package:flutter/foundation.dart';
+import '../services/dashboard_service.dart';
+
+/// État du tableau de bord (§10.3) : CA du jour, nombre de ventes, alertes...
+class DashboardProvider extends ChangeNotifier {
+  final DashboardService _service = DashboardService();
+
+  bool chargement = false;
+  String? erreur;
+
+  double chiffreAffairesJour = 0;
+  int nombreVentes = 0;
+  int produitsEnRupture = 0;
+  double depensesJour = 0;
+  List<num> ventesParJour = List.filled(7, 0);
+
+  Future<void> chargerDonnees() async {
+    chargement = true;
+    erreur = null;
+    notifyListeners();
+
+    try {
+      final data = await _service.getStatsJour();
+      chiffreAffairesJour = (data['chiffre_affaires'] ?? 0).toDouble();
+      nombreVentes = (data['nombre_ventes'] ?? 0) as int;
+      produitsEnRupture = (data['produits_en_rupture'] ?? 0) as int;
+      depensesJour = (data['depenses_jour'] ?? 0).toDouble();
+      ventesParJour = (data['ventes_semaine'] as List?)?.cast<num>() ?? List.filled(7, 0);
+    } catch (e) {
+      erreur = "Impossible de charger le tableau de bord (backend non branché ?)";
+    }
+
+    chargement = false;
+    notifyListeners();
+  }
+}

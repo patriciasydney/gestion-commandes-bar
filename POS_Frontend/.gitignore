@@ -1,0 +1,28 @@
+# Flutter / Dart — dépendances et artefacts de build (ne pas versionner)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication / obfuscation
+app.*.symbols
+app.*.map.json
+
+# Android Studio / IntelliJ
+*.iml
+.idea/
+
+# VS Code (optionnel — décommenter si besoin)
+#.vscode/
+
+# macOS
+.DS_Store
+
+# Fichiers de couverture de test
+coverage/
+
+# Exceptions : on versionne le lockfile pour des builds reproductibles
+# pubspec.lock → conservé dans git

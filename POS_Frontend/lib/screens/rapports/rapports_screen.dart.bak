@@ -1,0 +1,611 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/utils/formatters.dart';
+import '../../services/rapport_service.dart';
+import '../../widgets/common/app_bottom_nav.dart';
+import '../../widgets/common/app_drawer.dart';
+
+/// Écran : Rapports et statistiques — cahier des charges §10.8
+///
+/// Permet de sélectionner une période (jour / semaine / mois / année) et
+/// d'afficher les indicateurs clés : chiffre d'affaires, nombre de ventes,
+/// dépenses, bénéfice net, panier moyen, top produits, ventilation par mode
+/// de paiement et par catégorie de dépense. Un bouton d'export génère un CSV
+/// copié dans le presse-papiers (l'export PDF/Excel réel se fera côté backend
+/// Django une fois branché).
+class RapportsScreen extends StatefulWidget {
+  const RapportsScreen({super.key});
+
+  @override
+  State<RapportsScreen> createState() => _RapportsScreenState();
+}
+
+class _RapportsScreenState extends State<RapportsScreen> {
+  final RapportService _service = RapportService();
+
+  Map<String, dynamic>? _donnees;
+  bool _chargement = false;
+  String? _erreur;
+  String _periode = 'jour';
+
+  static const _periodes = [
+    ('jour', 'Jour', Icons.today),
+    ('semaine', 'Semaine', Icons.calendar_view_week),
+    ('mois', 'Mois', Icons.calendar_month),
+    ('annee', 'Année', Icons.date_range),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _chargerRapport();
+  }
+
+  Future<void> _chargerRapport() async {
+    setState(() {
+      _chargement = true;
+      _erreur = null;
+    });
+    try {
+      _donnees = await _service.genererRapport(periode: _periode);
+    } catch (_) {
+      _erreur = "Impossible de générer le rapport (backend non branché ?)";
+    }
+    if (mounted) setState(() => _chargement = false);
+  }
+
+  void _changerPeriode(String p) {
+    if (p == _periode) return;
+    setState(() => _periode = p);
+    _chargerRapport();
+  }
+
+  /// Génère un CSV à partir des données du rapport et le copie dans le
+  /// presse-papiers. L'export PDF/Excel réel sera géré côté backend Django.
+  Future<void> _exporterCsv() async {
+    if (_donnees == null) return;
+
+    final lignes = <String>[];
+    lignes.add('Rapport POS Débits de Boissons');
+    lignes.add('Période;${_donnees!['libelle_periode']}');
+    lignes.add('Généré le;${Formatters.dateHeure(DateTime.now())}');
+    lignes.add('');
+    lignes.add('Indicateur;Valeur');
+    lignes.add('Chiffre d\'affaires;${Formatters.montant((_donnees!['chiffre_affaires'] as num).toDouble())}');
+    lignes.add('Nombre de ventes;${_donnees!['nombre_ventes']}');
+    lignes.add('Dépenses totales;${Formatters.montant((_donnees!['depenses_total'] as num).toDouble())}');
+    lignes.add('Bénéfice net;${Formatters.montant((_donnees!['benefice_net'] as num).toDouble())}');
+    lignes.add('Panier moyen;${Formatters.montant((_donnees!['panier_moyen'] as num).toDouble())}');
+    lignes.add('');
+    lignes.add('Top produits');
+    lignes.add('Produit;Quantité vendue;Chiffre d\'affaires');
+    for (final p in (_donnees!['top_produits'] as List)) {
+      lignes.add('${p['nom']};${p['quantite_vendue']};${Formatters.montant((p['ca'] as num).toDouble())}');
+    }
+    lignes.add('');
+    lignes.add('Ventes par mode de paiement');
+    lignes.add('Mode;Nombre;Montant');
+    for (final m in (_donnees!['ventes_par_mode_paiement'] as List)) {
+      lignes.add('${m['mode']};${m['nombre']};${Formatters.montant((m['montant'] as num).toDouble())}');
+    }
+    lignes.add('');
+    lignes.add('Dépenses par catégorie');
+    lignes.add('Catégorie;Montant');
+    for (final d in (_donnees!['depenses_par_categorie'] as List)) {
+      lignes.add('${d['categorie']};${Formatters.montant((d['montant'] as num).toDouble())}');
+    }
+
+    final csv = lignes.join('\n');
+    await Clipboard.setData(ClipboardData(text: csv));
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Rapport CSV copié dans le presse-papiers'),
+          backgroundColor: AppColors.vert,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Rapports et statistiques'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download),
+            tooltip: 'Exporter (CSV)',
+            onPressed: _donnees == null ? null : _exporterCsv,
+          ),
+        ],
+      ),
+      drawer: const AppDrawer(),
+      bottomNavigationBar: const AppBottomNav(currentRoute: '/rapports'),
+      body: Column(
+        children: [
+          // Sélecteur de période
+          Container(
+            width: double.infinity,
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final (valeur, label, icone) in _periodes)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        avatar: Icon(icone, size: 16),
+                        label: Text(label),
+                        selected: _periode == valeur,
+                        onSelected: (_) => _changerPeriode(valeur),
+                        selectedColor: AppColors.bleuFonce.withValues(alpha: 0.15),
+                        labelStyle: TextStyle(
+                          color: _periode == valeur
+                              ? AppColors.bleuFonce
+                              : AppColors.texteClair,
+                          fontWeight: _periode == valeur
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          // Corps
+          Expanded(
+            child: Builder(builder: (context) {
+              if (_chargement) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (_erreur != null) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(_erreur!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: AppColors.rouge)),
+                  ),
+                );
+              }
+              if (_donnees == null) {
+                return const SizedBox.shrink();
+              }
+              return RefreshIndicator(
+                onRefresh: _chargerRapport,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _donnees!['libelle_periode'].toString(),
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Synthèse des ventes et dépenses',
+                        style: TextStyle(color: AppColors.texteClair, fontSize: 13),
+                      ),
+                      const SizedBox(height: 16),
+                      // Cartes stats principales
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.5,
+                        children: [
+                          _CarteStat(
+                            titre: "Chiffre d'affaires",
+                            valeur: Formatters.montant(
+                                (_donnees!['chiffre_affaires'] as num).toDouble()),
+                            icone: Icons.payments,
+                            couleur: AppColors.vert,
+                          ),
+                          _CarteStat(
+                            titre: 'Nombre de ventes',
+                            valeur: _donnees!['nombre_ventes'].toString(),
+                            icone: Icons.receipt_long,
+                            couleur: AppColors.bleuFonce,
+                          ),
+                          _CarteStat(
+                            titre: 'Dépenses totales',
+                            valeur: Formatters.montant(
+                                (_donnees!['depenses_total'] as num).toDouble()),
+                            icone: Icons.trending_down,
+                            couleur: AppColors.rouge,
+                          ),
+                          _CarteStat(
+                            titre: 'Bénéfice net',
+                            valeur: Formatters.montant(
+                                (_donnees!['benefice_net'] as num).toDouble()),
+                            icone: Icons.savings,
+                            couleur: AppColors.orange,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _CarteStatLarge(
+                        titre: 'Panier moyen',
+                        valeur: Formatters.montant(
+                            (_donnees!['panier_moyen'] as num).toDouble()),
+                        icone: Icons.shopping_basket,
+                        couleur: AppColors.jaune,
+                      ),
+                      const SizedBox(height: 24),
+                      // Top produits
+                      _TitreSection('Top produits vendus'),
+                      const SizedBox(height: 8),
+                      _ListeTopProduits(_donnees!['top_produits'] as List),
+                      const SizedBox(height: 24),
+                      // Ventes par mode de paiement
+                      _TitreSection('Ventes par mode de paiement'),
+                      const SizedBox(height: 8),
+                      _ListeModePaiement(_donnees!['ventes_par_mode_paiement'] as List),
+                      const SizedBox(height: 24),
+                      // Dépenses par catégorie
+                      _TitreSection('Dépenses par catégorie'),
+                      const SizedBox(height: 8),
+                      _ListeDepensesCategorie(
+                          _donnees!['depenses_par_categorie'] as List),
+                      const SizedBox(height: 16),
+                      // Note d'export
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.bleuFonce.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: AppColors.bleuFonce.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline,
+                                color: AppColors.bleuFonce, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'L\'export PDF et Excel détaillé sera disponible une fois le backend Django connecté. En mode démo, l\'icône 📥 de l\'en-tête copie un CSV dans le presse-papiers.',
+                                style: TextStyle(
+                                    color: AppColors.bleuFonce,
+                                    fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sous-composants
+// ---------------------------------------------------------------------------
+
+class _TitreSection extends StatelessWidget {
+  final String texte;
+  const _TitreSection(this.texte);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(texte, style: Theme.of(context).textTheme.titleLarge);
+  }
+}
+
+class _CarteStat extends StatelessWidget {
+  final String titre;
+  final String valeur;
+  final IconData icone;
+  final Color couleur;
+
+  const _CarteStat({
+    required this.titre,
+    required this.valeur,
+    required this.icone,
+    required this.couleur,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Icon(icone, color: couleur, size: 22),
+            const SizedBox(height: 4),
+            Text(titre,
+                style: const TextStyle(color: AppColors.texteClair, fontSize: 12)),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(valeur,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CarteStatLarge extends StatelessWidget {
+  final String titre;
+  final String valeur;
+  final IconData icone;
+  final Color couleur;
+
+  const _CarteStatLarge({
+    required this.titre,
+    required this.valeur,
+    required this.icone,
+    required this.couleur,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: couleur.withValues(alpha: 0.15),
+              child: Icon(icone, color: couleur),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(titre,
+                      style: const TextStyle(
+                          color: AppColors.texteClair, fontSize: 12)),
+                  Text(valeur,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ListeTopProduits extends StatelessWidget {
+  final List produits;
+  const _ListeTopProduits(this.produits);
+
+  @override
+  Widget build(BuildContext context) {
+    if (produits.isEmpty) {
+      return const Text('Aucune vente sur la période.',
+          style: TextStyle(color: AppColors.texteClair));
+    }
+    final maxQte = (produits.first['quantite_vendue'] as num).toDouble();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: Column(
+        children: [
+          for (int i = 0; i < produits.length; i++) ...[
+            _LigneTopProduit(
+              rang: i + 1,
+              nom: produits[i]['nom'].toString(),
+              quantite: (produits[i]['quantite_vendue'] as num).toInt(),
+              ca: (produits[i]['ca'] as num).toDouble(),
+              ratio: (produits[i]['quantite_vendue'] as num).toDouble() / maxQte,
+            ),
+            if (i < produits.length - 1) const Divider(height: 1),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LigneTopProduit extends StatelessWidget {
+  final int rang;
+  final String nom;
+  final int quantite;
+  final double ca;
+  final double ratio;
+
+  const _LigneTopProduit({
+    required this.rang,
+    required this.nom,
+    required this.quantite,
+    required this.ca,
+    required this.ratio,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            child: Text('#$rang',
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, color: AppColors.bleuFonce)),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(nom, style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: LinearProgressIndicator(
+                    value: ratio.clamp(0.0, 1.0),
+                    minHeight: 5,
+                    backgroundColor: AppColors.fond,
+                    color: AppColors.orange,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('$quantite u.',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(Formatters.montant(ca),
+                  style: const TextStyle(
+                      color: AppColors.texteClair, fontSize: 11)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ListeModePaiement extends StatelessWidget {
+  final List modes;
+  const _ListeModePaiement(this.modes);
+
+  @override
+  Widget build(BuildContext context) {
+    if (modes.isEmpty) {
+      return const Text('Aucune vente sur la période.',
+          style: TextStyle(color: AppColors.texteClair));
+    }
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        for (final m in modes)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE0E0E0)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(m['mode'] == 'espèces'
+                    ? Icons.money
+                    : Icons.phone_iphone,
+                    color: AppColors.bleuFonce, size: 20),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(m['mode'].toString().toUpperCase(),
+                        style: const TextStyle(
+                            fontSize: 11, color: AppColors.texteClair)),
+                    Text('${m['nombre']} ventes',
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(Formatters.montant((m['montant'] as num).toDouble()),
+                        style: const TextStyle(
+                            color: AppColors.vert, fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ListeDepensesCategorie extends StatelessWidget {
+  final List categories;
+  const _ListeDepensesCategorie(this.categories);
+
+  @override
+  Widget build(BuildContext context) {
+    if (categories.isEmpty) {
+      return const Text('Aucune dépense sur la période.',
+          style: TextStyle(color: AppColors.texteClair));
+    }
+    final maxMontant =
+        categories.map((c) => (c['montant'] as num).toDouble()).reduce((a, b) => a > b ? a : b);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: [
+          for (final c in categories) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(c['categorie'].toString(),
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: ((c['montant'] as num).toDouble() / maxMontant)
+                            .clamp(0.0, 1.0),
+                        minHeight: 6,
+                        backgroundColor: AppColors.fond,
+                        color: AppColors.rouge,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 100,
+                    child: Text(
+                      Formatters.montant((c['montant'] as num).toDouble()),
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

@@ -1,0 +1,58 @@
+import '../core/constants/api_constants.dart';
+
+/// Simule les réponses de l'API Django tant que le backend réel n'est pas prêt.
+/// Chaque endpoint retourne un JSON de la même forme que ce qu'enverra Django,
+/// pour que le passage au vrai backend ne nécessite qu'un changement de
+/// `ApiConstants.modeDemo` (aucune modification des services/providers/screens).
+class MockApi {
+  static Future<dynamic> handle(
+    String method,
+    String endpoint, {
+    Map<String, dynamic>? body,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500)); // simule la latence réseau
+
+    if (endpoint == ApiConstants.login && method == 'POST') {
+      return _login(body ?? {});
+    }
+
+    if (endpoint == ApiConstants.dashboard && method == 'GET') {
+      return _dashboard();
+    }
+
+    throw Exception('Endpoint mock non implémenté : $method $endpoint');
+  }
+
+  static Map<String, dynamic> _login(Map<String, dynamic> body) {
+    final username = body['username'];
+    final password = body['password'];
+
+    if (username == 'admin' && password == 'admin123') {
+      return {
+        'token': 'mock-token-abc123',
+        'utilisateur': {
+          'id_utilisateur': 1,
+          'nom': 'Masse',
+          'prenom': 'Paulo',
+          'telephone': '699000000',
+          'email': 'admin@front-boisson.test',
+          'nom_utilisateur': 'admin',
+          'statut': 'actif',
+          'id_role': 1,
+        },
+      };
+    }
+
+    throw Exception('Identifiants invalides (mode démo : admin / admin123)');
+  }
+
+  static Map<String, dynamic> _dashboard() {
+    return {
+      'chiffre_affaires': 125000,
+      'nombre_ventes': 34,
+      'produits_en_rupture': 3,
+      'depenses_jour': 15000,
+      'ventes_semaine': [12, 19, 8, 25, 30, 22, 34],
+    };
+  }
+}
