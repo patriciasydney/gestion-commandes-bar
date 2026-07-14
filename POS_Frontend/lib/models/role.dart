@@ -18,10 +18,12 @@ class Role {
   /// Construit un Role à partir du JSON renvoyé par l'API.
   factory Role.fromJson(Map<String, dynamic> json) {
     return Role(
-      idRole: json['id_role'] is int ? json['id_role'] as int : int.parse(json['id_role'].toString()),
+      idRole: json['id_role'] is int
+          ? json['id_role'] as int
+          : int.parse(json['id_role'].toString()),
       nomRole: json['nom_role'].toString(),
       description: json['description']?.toString(),
-      actif: json['actif'] as bool
+      actif: json['actif'] == true || json['actif'] == 1,
     );
   }
 

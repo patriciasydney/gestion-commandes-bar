@@ -31,7 +31,12 @@ class Utilisateur {
 
   String get nomRole => role?.nomRole ?? '';
 
-  bool get isAdministrateur => nomRole == 'Administrateur' || roleId == 1;
+  bool get isAdministrateur {
+    final roleLower = nomRole.toLowerCase();
+    return roleId == 1 ||
+        roleLower == 'administrateur' ||
+        roleLower.contains('admin');
+  }
 
   factory Utilisateur.fromJson(Map<String, dynamic> json) {
     return Utilisateur(
@@ -42,9 +47,7 @@ class Utilisateur {
       telephone: json['telephone']?.toString(),
       email: json['email'].toString(),
       statut: json['statut'].toString(),
-      role: json['role'] is Map<String, dynamic>
-          ? Role.fromJson(json['role'] as Map<String, dynamic>)
-          : null,
+      role: _parseRole(json),
       photo: json['photo']?.toString(),
       dateCreation: json['date_creation'] != null
           ? DateTime.tryParse(json['date_creation'].toString())
@@ -108,5 +111,28 @@ class Utilisateur {
   static int _parseInt(dynamic value) {
     if (value is int) return value;
     return int.parse(value.toString());
+  }
+
+  static Role? _parseRole(Map<String, dynamic> json) {
+    final role = json['role'];
+    if (role is Map<String, dynamic>) {
+      return Role.fromJson(role);
+    }
+    if (role is int) {
+      return Role(
+        idRole: role,
+        nomRole: json['nom_role']?.toString() ?? '',
+        actif: true,
+      );
+    }
+    final roleId = json['role_id'];
+    if (roleId != null) {
+      return Role(
+        idRole: _parseInt(roleId),
+        nomRole: json['nom_role']?.toString() ?? '',
+        actif: true,
+      );
+    }
+    return null;
   }
 }

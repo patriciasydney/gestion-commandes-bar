@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_helpers.dart';
 import '../../core/utils/validators.dart';
 import '../../models/fournisseur.dart';
 import '../../models/produit.dart';
@@ -170,14 +171,18 @@ class _ProduitFormScreenState extends State<ProduitFormScreen> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: AppColors.fond,
+                        color: ThemeHelpers.fill(context),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0x1A000000)),
+                        border: Border.all(color: ThemeHelpers.border(context)),
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: _image != null
                           ? Image.memory(base64Decode(_image!), fit: BoxFit.cover)
-                          : const Icon(Icons.add_a_photo_outlined, size: 32, color: AppColors.texteClair),
+                          : Icon(
+                              Icons.add_a_photo_outlined,
+                              size: 32,
+                              color: ThemeHelpers.mutedText(context),
+                            ),
                     ),
                     Positioned(
                       right: 0,

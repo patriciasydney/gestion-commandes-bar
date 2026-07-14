@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_helpers.dart';
 import '../../core/utils/validators.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common/app_button.dart';
@@ -49,7 +50,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
-      backgroundColor: AppColors.fond,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -67,16 +67,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         'assets/images/logo_atsys.png',
                         height: 96,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.local_bar, size: 48, color: AppColors.bleuFonce),
+                            const Icon(Icons.local_bar, size: 48, color: AppColors.orange),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         "ATSYS_POS",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.bleuFonce),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: ThemeHelpers.accent(context),
+                            ),
                       ),
-                      const Text(
+                      Text(
                         "Système de gestion des débits de boissons",
-                        style: TextStyle(fontSize: 12, color: AppColors.texteClair),
+                        style: ThemeHelpers.mutedTextStyle(context, fontSize: 12),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),

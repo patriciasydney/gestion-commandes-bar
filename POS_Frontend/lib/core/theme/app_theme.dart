@@ -22,6 +22,10 @@ class AppTheme {
         tertiary: AppColors.bleuClair,
         error: AppColors.rouge,
         surface: AppColors.surface,
+      ).copyWith(
+        surfaceContainerHighest: AppColors.surfaceAlt,
+        onSurface: AppColors.texte,
+        onSurfaceVariant: AppColors.texteSecondaire,
       ),
 
       // AppBar
@@ -360,6 +364,10 @@ class AppTheme {
         tertiary: AppColors.orangeClair,
         error: AppColors.rouge,
         surface: AppColors.surfaceSombre,
+      ).copyWith(
+        surfaceContainerHighest: AppColors.surfaceAltSombre,
+        onSurface: AppColors.texteSombre,
+        onSurfaceVariant: AppColors.texteSecondaireSombre,
       ),
 
       appBarTheme: AppBarTheme(

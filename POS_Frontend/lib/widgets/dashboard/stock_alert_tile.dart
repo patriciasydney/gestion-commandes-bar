@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_helpers.dart';
 import '../../models/dashboard_summary.dart';
 
 /// Ligne d'alerte stock faible sur le tableau de bord.
@@ -21,7 +22,7 @@ class StockAlertTile extends StatelessWidget {
       ),
       subtitle: Text(
         'Seuil : ${alerte.seuil} — Restant : ${alerte.quantite}',
-        style: const TextStyle(color: AppColors.texteClair, fontSize: 12),
+        style: ThemeHelpers.mutedTextStyle(context, fontSize: 12),
       ),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

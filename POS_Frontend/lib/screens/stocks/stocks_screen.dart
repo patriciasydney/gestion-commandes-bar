@@ -8,6 +8,8 @@ import '../../providers/stock_provider.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../core/theme/theme_helpers.dart';
+import '../../widgets/common/filter_choice_chip.dart';
 
 /// Écran : Gestion des stocks — cahier des charges §10.6
 ///
@@ -331,15 +333,9 @@ class _StocksScreenState extends State<StocksScreen> {
               children: [
                 Expanded(
                   child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Rechercher un produit par son nom…',
-                      prefixIcon: const Icon(Icons.search),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
+                    decoration: themedSearchDecoration(
+                      context,
+                      hint: 'Rechercher un produit par son nom…',
                     ),
                     onChanged: (v) => setState(() => _recherche = v),
                   ),
@@ -350,13 +346,20 @@ class _StocksScreenState extends State<StocksScreen> {
                   selected: stockProvider.filtreAlerteSeulement,
                   onSelected: (v) => stockProvider.basculerFiltreAlerte(v),
                   selectedColor: AppColors.rouge,
+                  backgroundColor: ThemeHelpers.fill(context),
                   showCheckmark: false,
                   labelStyle: TextStyle(
-                    color: stockProvider.filtreAlerteSeulement ? Colors.white : AppColors.texteClair,
-                    fontWeight: stockProvider.filtreAlerteSeulement ? FontWeight.bold : FontWeight.normal,
+                    color: stockProvider.filtreAlerteSeulement
+                        ? Colors.white
+                        : ThemeHelpers.mutedText(context),
+                    fontWeight: stockProvider.filtreAlerteSeulement
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                   side: BorderSide(
-                    color: stockProvider.filtreAlerteSeulement ? AppColors.rouge : AppColors.bordure,
+                    color: stockProvider.filtreAlerteSeulement
+                        ? AppColors.rouge
+                        : ThemeHelpers.border(context),
                   ),
                 ),
               ],
@@ -383,9 +386,11 @@ class _StocksScreenState extends State<StocksScreen> {
                 return nom.contains(_recherche.toLowerCase());
               }).toList();
               if (stocksFiltres.isEmpty) {
-                return const Center(
-                  child: Text('Aucun stock trouvé',
-                      style: TextStyle(color: AppColors.texteClair)),
+                return Center(
+                  child: Text(
+                    'Aucun stock trouvé',
+                    style: ThemeHelpers.mutedTextStyle(context),
+                  ),
                 );
               }
               return RefreshIndicator(
@@ -558,7 +563,7 @@ class _CarteStock extends StatelessWidget {
                         (stock.seuilAlerte * 2 == 0 ? 1 : stock.seuilAlerte * 2))
                     .clamp(0.0, 1.0),
                 minHeight: 6,
-                backgroundColor: AppColors.fond,
+                backgroundColor: ThemeHelpers.progressTrack(context),
                 color: _couleurStatut,
               ),
             ),

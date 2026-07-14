@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_helpers.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/rapport.dart';
 import '../../services/rapport_service.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/filter_choice_chip.dart';
 
 /// Écran : Rapports et statistiques — aligné sur `/reports/*` (DRF).
 class RapportsScreen extends StatefulWidget {
@@ -122,7 +124,7 @@ class _RapportsScreenState extends State<RapportsScreen> {
         children: [
           Container(
             width: double.infinity,
-            color: Colors.white,
+            color: ThemeHelpers.surface(context),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -131,24 +133,11 @@ class _RapportsScreenState extends State<RapportsScreen> {
                   for (final (valeur, label, icone) in _periodes)
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        avatar: Icon(
-                          icone,
-                          size: 16,
-                          color: _periode == valeur ? Colors.white : AppColors.texteClair,
-                        ),
-                        label: Text(label),
+                      child: FilterChoiceChip(
+                        label: label,
+                        icon: icone,
                         selected: _periode == valeur,
-                        onSelected: (_) => _changerPeriode(valeur),
-                        selectedColor: AppColors.bleuFonce,
-                        showCheckmark: false,
-                        labelStyle: TextStyle(
-                          color: _periode == valeur ? Colors.white : AppColors.texteClair,
-                          fontWeight: _periode == valeur ? FontWeight.w600 : FontWeight.normal,
-                        ),
-                        side: BorderSide(
-                          color: _periode == valeur ? AppColors.bleuFonce : AppColors.bordure,
-                        ),
+                        onSelected: () => _changerPeriode(valeur),
                       ),
                     ),
                 ],
@@ -188,9 +177,9 @@ class _RapportsScreenState extends State<RapportsScreen> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Synthèse ventes, achats fournisseurs et dépenses opérationnelles',
-                        style: TextStyle(color: AppColors.texteClair, fontSize: 13),
+                        style: ThemeHelpers.mutedTextStyle(context, fontSize: 13),
                       ),
                       const SizedBox(height: 16),
                       GridView.count(
@@ -252,7 +241,7 @@ class _RapportsScreenState extends State<RapportsScreen> {
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Text(
                             '${rapport.nombreAchats} achat(s) — ${Formatters.montant(rapport.achatsTotal)}',
-                            style: const TextStyle(color: AppColors.texteClair, fontSize: 13),
+                            style: ThemeHelpers.mutedTextStyle(context, fontSize: 13),
                           ),
                         ),
                       const SizedBox(height: 4),
@@ -308,14 +297,16 @@ class _CarteStat extends StatelessWidget {
           children: [
             Icon(icone, color: couleur, size: 22),
             const SizedBox(height: 4),
-            Text(titre, style: const TextStyle(color: AppColors.texteClair, fontSize: 12)),
+            Text(titre, style: ThemeHelpers.mutedTextStyle(context, fontSize: 12)),
             const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
                 valeur,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ),
           ],
@@ -354,10 +345,12 @@ class _CarteStatLarge extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(titre, style: const TextStyle(color: AppColors.texteClair, fontSize: 12)),
+                  Text(titre, style: ThemeHelpers.mutedTextStyle(context, fontSize: 12)),
                   Text(
                     valeur,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ],
               ),
@@ -376,19 +369,15 @@ class _ListeTopProduits extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (produits.isEmpty) {
-      return const Text(
+      return Text(
         'Aucune vente sur la période.',
-        style: TextStyle(color: AppColors.texteClair),
+        style: ThemeHelpers.mutedTextStyle(context),
       );
     }
     final maxQte = produits.first.quantiteTotale.toDouble();
 
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
+      decoration: ThemeHelpers.cardDecoration(context),
       child: Column(
         children: [
           for (int i = 0; i < produits.length; i++) ...[
@@ -432,7 +421,10 @@ class _LigneTopProduit extends StatelessWidget {
             width: 24,
             child: Text(
               '#$rang',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.bleuFonce),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: ThemeHelpers.accent(context),
+              ),
             ),
           ),
           Expanded(
@@ -446,7 +438,7 @@ class _LigneTopProduit extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: ratio.clamp(0.0, 1.0),
                     minHeight: 5,
-                    backgroundColor: AppColors.fond,
+                    backgroundColor: ThemeHelpers.progressTrack(context),
                     color: AppColors.orange,
                   ),
                 ),
@@ -460,7 +452,7 @@ class _LigneTopProduit extends StatelessWidget {
               Text('$quantite u.', style: const TextStyle(fontWeight: FontWeight.w600)),
               Text(
                 Formatters.montant(ca),
-                style: const TextStyle(color: AppColors.texteClair, fontSize: 11),
+                style: ThemeHelpers.mutedTextStyle(context, fontSize: 11),
               ),
             ],
           ),
@@ -477,19 +469,15 @@ class _ListeDepensesCategorie extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (categories.isEmpty) {
-      return const Text(
+      return Text(
         'Aucune dépense opérationnelle sur la période.',
-        style: TextStyle(color: AppColors.texteClair),
+        style: ThemeHelpers.mutedTextStyle(context),
       );
     }
     final maxMontant = categories.map((c) => c.total).reduce((a, b) => a > b ? a : b);
 
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
+      decoration: ThemeHelpers.cardDecoration(context),
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         children: [
@@ -512,7 +500,7 @@ class _ListeDepensesCategorie extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: (c.total / maxMontant).clamp(0.0, 1.0),
                         minHeight: 6,
-                        backgroundColor: AppColors.fond,
+                        backgroundColor: ThemeHelpers.progressTrack(context),
                         color: AppColors.rouge,
                       ),
                     ),
@@ -542,19 +530,15 @@ class _ListeAchatsFournisseur extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (fournisseurs.isEmpty) {
-      return const Text(
+      return Text(
         'Aucun achat fournisseur sur la période.',
-        style: TextStyle(color: AppColors.texteClair),
+        style: ThemeHelpers.mutedTextStyle(context),
       );
     }
     final maxMontant = fournisseurs.map((f) => f.total).reduce((a, b) => a > b ? a : b);
 
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-      ),
+      decoration: ThemeHelpers.cardDecoration(context),
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         children: [
@@ -574,7 +558,7 @@ class _ListeAchatsFournisseur extends StatelessWidget {
                         ),
                         Text(
                           '${f.nombreAchats} achat(s)',
-                          style: const TextStyle(color: AppColors.texteClair, fontSize: 11),
+                          style: ThemeHelpers.mutedTextStyle(context, fontSize: 11),
                         ),
                       ],
                     ),
@@ -586,7 +570,7 @@ class _ListeAchatsFournisseur extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: (f.total / maxMontant).clamp(0.0, 1.0),
                         minHeight: 6,
-                        backgroundColor: AppColors.fond,
+                        backgroundColor: ThemeHelpers.progressTrack(context),
                         color: AppColors.orange,
                       ),
                     ),

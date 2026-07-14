@@ -6,6 +6,8 @@ import '../../models/depense.dart';
 import '../../services/depense_service.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../core/theme/theme_helpers.dart';
+import '../../widgets/common/filter_choice_chip.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 
 /// Écran : Gestion des dépenses — cahier des charges §10.6 (volet dépenses courantes)
@@ -76,7 +78,7 @@ class _DepensesScreenState extends State<DepensesScreen> {
     final resultat = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -165,19 +167,10 @@ class _DepensesScreenState extends State<DepensesScreen> {
                 for (final c in _categories)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(c),
+                    child: FilterChoiceChip(
+                      label: c,
                       selected: _filtreCategorie == c,
-                      onSelected: (_) => setState(() => _filtreCategorie = c),
-                      selectedColor: AppColors.bleuFonce,
-                      showCheckmark: false,
-                      labelStyle: TextStyle(
-                        color: _filtreCategorie == c ? Colors.white : AppColors.texteClair,
-                        fontWeight: _filtreCategorie == c ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      side: BorderSide(
-                        color: _filtreCategorie == c ? AppColors.bleuFonce : AppColors.bordure,
-                      ),
+                      onSelected: () => setState(() => _filtreCategorie = c),
                     ),
                   ),
               ],
@@ -194,9 +187,11 @@ class _DepensesScreenState extends State<DepensesScreen> {
                     style: const TextStyle(color: AppColors.rouge)));
               }
               if (_depensesFiltrees.isEmpty) {
-                return const Center(
-                  child: Text('Aucune dépense à afficher',
-                      style: TextStyle(color: AppColors.texteClair)),
+                return Center(
+                  child: Text(
+                    'Aucune dépense à afficher',
+                    style: ThemeHelpers.mutedTextStyle(context),
+                  ),
                 );
               }
               return RefreshIndicator(

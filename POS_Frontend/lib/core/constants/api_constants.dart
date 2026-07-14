@@ -10,6 +10,7 @@ class ApiConstants {
 
   static const String baseUrl = "http://localhost:8000/api"; // à changer en http://sport.services-ztf.com/api une fois le backend déployé
   static const String login = "/auth/login/";
+  static const String authMe = "/auth/me/";
   static const String produits = "/produits/";
   static const String categories = "/categories/";
   static const String fournisseurs = "/fournisseurs/";

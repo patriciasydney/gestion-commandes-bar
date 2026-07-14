@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_helpers.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/produit.dart';
 import '../../providers/categorie_provider.dart';
@@ -10,6 +11,7 @@ import '../../routes/app_routes.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/filter_choice_chip.dart';
 
 /// Écran : Gestion des produits — cahier des charges §10.5
 class ProduitsScreen extends StatefulWidget {
@@ -96,15 +98,9 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
             child: Column(
               children: [
                 TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Rechercher un produit (nom, code, code-barres)…',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: AppColors.fond,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
+                  decoration: themedSearchDecoration(
+                    context,
+                    hint: 'Rechercher un produit (nom, code, code-barres)…',
                   ),
                   onChanged: produitProvider.rechercher,
                 ),
@@ -143,7 +139,12 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
                 return Center(child: Text(produitProvider.erreur!, style: const TextStyle(color: AppColors.rouge)));
               }
               if (produitProvider.produits.isEmpty) {
-                return const Center(child: Text('Aucun produit trouvé', style: TextStyle(color: AppColors.texteClair)));
+                return Center(
+                  child: Text(
+                    'Aucun produit trouvé',
+                    style: ThemeHelpers.mutedTextStyle(context),
+                  ),
+                );
               }
               return RefreshIndicator(
                 onRefresh: produitProvider.chargerProduits,
@@ -179,19 +180,10 @@ class _ChipCategorie extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChoiceChip(
-      label: Text(label),
+    return FilterChoiceChip(
+      label: label,
       selected: selectionnee,
-      onSelected: (_) => onTap(),
-      selectedColor: AppColors.bleuFonce,
-      showCheckmark: false,
-      labelStyle: TextStyle(
-        color: selectionnee ? Colors.white : AppColors.texteClair,
-        fontWeight: selectionnee ? FontWeight.bold : FontWeight.normal,
-      ),
-      backgroundColor: AppColors.fond,
-      side: BorderSide(color: selectionnee ? AppColors.bleuFonce : AppColors.bordure),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      onSelected: onTap,
     );
   }
 }
@@ -255,8 +247,8 @@ class _ProduitImage extends StatelessWidget {
   Widget build(BuildContext context) {
     if (image == null || image!.isEmpty) {
       return Container(
-        color: AppColors.fond,
-        child: const Icon(Icons.local_bar, color: AppColors.texteClair),
+        color: ThemeHelpers.fill(context),
+        child: Icon(Icons.local_bar, color: ThemeHelpers.mutedText(context)),
       );
     }
 
@@ -268,8 +260,8 @@ class _ProduitImage extends StatelessWidget {
       return Image.memory(base64Decode(image!), fit: BoxFit.cover);
     } catch (_) {
       return Container(
-        color: AppColors.fond,
-        child: const Icon(Icons.broken_image_outlined, color: AppColors.texteClair),
+        color: ThemeHelpers.fill(context),
+        child: Icon(Icons.broken_image_outlined, color: ThemeHelpers.mutedText(context)),
       );
     }
   }

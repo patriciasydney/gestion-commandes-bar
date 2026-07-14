@@ -7,11 +7,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from apps.achats.models import Achat
 from apps.depenses.models import Depense
 from apps.utilisateurs.permissions import IsGerantOrComptable
 from apps.ventes.models import DetailVente, Vente
 
 from .serializers import (
+    RapportAchatsSerializer,
     RapportDepensesSerializer,
     RapportProduitsSerializer,
     RapportVentesSerializer,
@@ -115,5 +117,41 @@ def rapport_depenses(request):
             },
             "total_depenses": total,
             "par_categorie": list(par_categorie),
+        }
+    )
+
+
+@extend_schema(responses={200: RapportAchatsSerializer})
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsGerantOrComptable])
+def rapport_achats(request):
+    debut, fin = _parse_periode(request)
+    qs = Achat.objects.filter(statut=Achat.STATUT_VALIDE)
+    if debut:
+        qs = qs.filter(date_achat__date__gte=debut)
+    if fin:
+        qs = qs.filter(date_achat__date__lte=fin)
+
+    total = qs.aggregate(total=Sum("montant_total"))["total"] or 0
+    nombre = qs.aggregate(count=Count("id_achat"))["count"] or 0
+
+    par_fournisseur = (
+        qs.values("fournisseur__raison_sociale")
+        .annotate(
+            total_fournisseur=Sum("montant_total"),
+            nombre_achats=Count("id_achat"),
+        )
+        .order_by("-total_fournisseur")
+    )
+
+    return Response(
+        {
+            "periode": {
+                "debut": str(debut) if debut else None,
+                "fin": str(fin) if fin else None,
+            },
+            "total_achats": total,
+            "nombre_achats": nombre,
+            "par_fournisseur": list(par_fournisseur),
         }
     )

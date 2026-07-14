@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_helpers.dart';
 import '../../core/utils/formatters.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../widgets/common/app_drawer.dart';
@@ -36,10 +37,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.bleuFonce.withValues(alpha: 0.1),
+              color: ThemeHelpers.accent(context).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icone, color: AppColors.bleuFonce, size: 20),
+            child: Icon(icone, color: ThemeHelpers.accent(context), size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -55,10 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (sousTitre != null)
                   Text(
                     sousTitre,
-                    style: const TextStyle(
-                      color: AppColors.texteClair,
-                      fontSize: 12,
-                    ),
+                    style: ThemeHelpers.mutedTextStyle(context, fontSize: 12),
                   ),
               ],
             ),
@@ -80,13 +78,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: Consumer<DashboardProvider>(
         builder: (context, provider, _) {
           if (provider.chargement) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Chargement des données...', style: TextStyle(color: AppColors.texteClair)),
+                  CircularProgressIndicator(color: ThemeHelpers.accent(context)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Chargement des données...',
+                    style: ThemeHelpers.mutedTextStyle(context),
+                  ),
                 ],
               ),
             );
@@ -94,7 +95,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           return RefreshIndicator(
             onRefresh: () => provider.chargerDonnees(),
-            color: AppColors.bleuFonce,
+            color: ThemeHelpers.accent(context),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(20),
@@ -329,23 +330,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Icons.trending_up,
                     sousTitre: '7 derniers jours',
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: SalesChart(
-                      ventesParJour: provider.ventesParJour,
-                      labels: provider.labelsGraphique,
-                    ),
+                  SalesChart(
+                    ventesParJour: provider.ventesParJour,
+                    labels: provider.labelsGraphique,
                   ),
                   const SizedBox(height: 28),
 
@@ -360,19 +347,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE0E0E0)),
-                      ),
-                      child: const Row(
+                      decoration: ThemeHelpers.cardDecoration(context, radius: 16),
+                      child: Row(
                         children: [
-                          Icon(Icons.check_circle_outline, color: AppColors.vert),
-                          SizedBox(width: 12),
+                          const Icon(Icons.check_circle_outline, color: AppColors.vert),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'Aucune alerte stock — niveaux OK',
-                              style: TextStyle(color: AppColors.texteClair),
+                              style: ThemeHelpers.mutedTextStyle(context),
                             ),
                           ),
                         ],
@@ -380,17 +363,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     )
                   else
                     Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
+                      decoration: ThemeHelpers.cardDecoration(context, radius: 16),
                       child: Column(
                         children: [
                           for (int i = 0; i < provider.stocksFaibles.length; i++) ...[
@@ -398,7 +371,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             if (i < provider.stocksFaibles.length - 1)
                               Divider(
                                 height: 1,
-                                color: const Color(0xFFE0E0E0).withValues(alpha: 0.5),
+                                color: ThemeHelpers.border(context).withValues(alpha: 0.5),
                               ),
                           ],
                         ],

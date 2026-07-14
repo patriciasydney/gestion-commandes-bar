@@ -8,6 +8,7 @@ import '../../services/client_service.dart';
 import '../../services/vente_service.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/filter_choice_chip.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 
 /// Écran : Gestion des clients — cahier des charges §5.7
@@ -299,15 +300,9 @@ class _ClientsScreenState extends State<ClientsScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Rechercher (nom, prénom, téléphone, email)…',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
+              decoration: themedSearchDecoration(
+                context,
+                hint: 'Rechercher (nom, prénom, téléphone, email)…',
               ),
               onChanged: (v) {
                 setState(() => _recherche = v);

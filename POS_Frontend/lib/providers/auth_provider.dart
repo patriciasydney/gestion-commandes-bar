@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/constants/api_constants.dart';
 import '../models/utilisateur.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
@@ -47,6 +48,7 @@ class AuthProvider extends ChangeNotifier {
             jsonDecode(utilisateurJson) as Map<String, dynamic>,
           );
         }
+        await _rafraichirProfil(silencieux: true);
       }
     } catch (_) {
       await _effacerSession(silencieux: true);
@@ -71,6 +73,7 @@ class AuthProvider extends ChangeNotifier {
 
       _api.setToken(_token);
       await _persisterSession(data['utilisateur'] as Map<String, dynamic>?);
+      await _rafraichirProfil(silencieux: true);
 
       chargement = false;
       notifyListeners();
@@ -87,6 +90,19 @@ class AuthProvider extends ChangeNotifier {
     await _authService.logout();
     await _effacerSession();
     notifyListeners();
+  }
+
+  Future<void> _rafraichirProfil({bool silencieux = false}) async {
+    if (_token == null) return;
+    try {
+      final data = await _api.get(ApiConstants.authMe);
+      if (data is! Map<String, dynamic>) return;
+      _utilisateurConnecte = Utilisateur.fromJson(data);
+      await _persisterSession(data);
+      if (!silencieux) notifyListeners();
+    } catch (_) {
+      // Session ou endpoint indisponible — on garde le profil en cache.
+    }
   }
 
   Future<void> _persisterSession(Map<String, dynamic>? utilisateurBackend) async {

@@ -9,6 +9,8 @@ import '../../providers/utilisateur_provider.dart';
 import '../../services/utilisateur_service.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../core/theme/theme_helpers.dart';
+import '../../widgets/common/filter_choice_chip.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 
 /// Écran : Gestion des utilisateurs — cahier des charges §10.7
@@ -69,7 +71,7 @@ class _UtilisateursScreenState extends State<UtilisateursScreen> {
     final resultat = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -131,10 +133,10 @@ class _UtilisateursScreenState extends State<UtilisateursScreen> {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Seul un compte Administrateur peut accéder à la gestion des utilisateurs.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.texteClair),
+                  style: ThemeHelpers.mutedTextStyle(context),
                 ),
               ],
             ),
@@ -160,15 +162,9 @@ class _UtilisateursScreenState extends State<UtilisateursScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Rechercher (nom, prénom, identifiant, email)…',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
+              decoration: themedSearchDecoration(
+                context,
+                hint: 'Rechercher (nom, prénom, identifiant, email)…',
               ),
               onChanged: provider.rechercher,
             ),
@@ -183,9 +179,11 @@ class _UtilisateursScreenState extends State<UtilisateursScreen> {
                     style: const TextStyle(color: AppColors.rouge)));
               }
               if (provider.utilisateurs.isEmpty) {
-                return const Center(
-                  child: Text('Aucun utilisateur trouvé',
-                      style: TextStyle(color: AppColors.texteClair)),
+                return Center(
+                  child: Text(
+                    'Aucun utilisateur trouvé',
+                    style: ThemeHelpers.mutedTextStyle(context),
+                  ),
                 );
               }
               return RefreshIndicator(
