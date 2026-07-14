@@ -297,7 +297,7 @@ class _Catalogue extends StatelessWidget {
                   hintText: 'Rechercher un produit (nom ou code-barres)…',
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
-                  fillColor: AppColors.fond,
+                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -394,7 +394,7 @@ class _PanierPanel extends StatelessWidget {
     final panier = context.watch<PanierProvider>();
 
     return Container(
-      color: AppColors.fond,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
           Padding(
@@ -437,22 +437,21 @@ class _PanierPanel extends StatelessWidget {
           ),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0x1A000000))),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
             ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    Text('Total', style: Theme.of(context).textTheme.titleMedium),
                     Text(
                       Formatters.montant(panier.total),
-                      style: const TextStyle(
-                        fontSize: 20,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.bleuFonce,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ],

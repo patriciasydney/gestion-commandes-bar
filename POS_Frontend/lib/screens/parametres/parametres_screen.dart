@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
 import '../../widgets/common/app_bottom_nav.dart';
@@ -220,6 +221,31 @@ class _ParametresScreenState extends State<ParametresScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
+          // ---- Section Apparence ----
+          _TitreSection('Apparence', Icons.palette_outlined),
+          const SizedBox(height: 8),
+          Card(
+            child: Consumer<ThemeProvider>(
+              builder: (context, themeProvider, _) => SwitchListTile(
+                secondary: Icon(
+                  themeProvider.estSombre ? Icons.dark_mode : Icons.light_mode,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                title: const Text('Thème sombre'),
+                subtitle: Text(
+                  themeProvider.estSombre
+                      ? 'Mode sombre activé'
+                      : 'Mode clair activé',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                value: themeProvider.estSombre,
+                onChanged: themeProvider.basculer,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
           // ---- Section Entreprise ----
           _TitreSection('Informations de l\'entreprise', Icons.business),
           const SizedBox(height: 8),
@@ -589,7 +615,7 @@ class _TitreSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icone, color: AppColors.bleuFonce, size: 20),
+        Icon(icone, color: Theme.of(context).colorScheme.primary, size: 20),
         const SizedBox(width: 8),
         Text(texte, style: Theme.of(context).textTheme.titleLarge),
       ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../providers/theme_provider.dart';
 
 /// Barre de navigation basse, persistante sur tous les écrans principaux.
 class AppBottomNav extends StatelessWidget {
@@ -19,42 +21,80 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = _items.indexWhere((i) => i.route == currentRoute);
+    final estSombre = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-        child: NavigationBar(
-          selectedIndex: selected == -1 ? 0 : selected,
-          backgroundColor: Colors.white,
-          indicatorColor: AppColors.bleuFonce.withValues(alpha: 0.12),
-          elevation: 0,
-          height: 66,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          onDestinationSelected: (i) {
-            if (_items[i].route == currentRoute) return;
-            Navigator.pushReplacementNamed(context, _items[i].route);
-          },
-          destinations: [
-            for (final item in _items)
-              NavigationDestination(
-                icon: Icon(item.icon, color: AppColors.texteClair),
-                selectedIcon: Icon(item.activeIcon, color: AppColors.bleuFonce),
-                label: item.label,
+    final couleurFond = Theme.of(context).colorScheme.surface;
+    final couleurOmbre = estSombre
+        ? Colors.black.withValues(alpha: 0.3)
+        : Colors.black.withValues(alpha: 0.06);
+    final iconeInactive = estSombre ? AppColors.texteClairSombre : AppColors.texteClair;
+    final iconeActive = estSombre ? AppColors.orangeClair : AppColors.bleuFonce;
+    final couleurToggle = estSombre ? AppColors.orangeClair : AppColors.bleuFonce;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: couleurFond,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            boxShadow: [
+              BoxShadow(
+                color: couleurOmbre,
+                blurRadius: 12,
+                offset: const Offset(0, -2),
               ),
-          ],
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            child: NavigationBar(
+              selectedIndex: selected == -1 ? 0 : selected,
+              backgroundColor: couleurFond,
+              indicatorColor: (estSombre ? AppColors.orangeClair : AppColors.bleuFonce)
+                  .withValues(alpha: 0.12),
+              elevation: 0,
+              height: 66,
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              onDestinationSelected: (i) {
+                if (_items[i].route == currentRoute) return;
+                Navigator.pushReplacementNamed(context, _items[i].route);
+              },
+              destinations: [
+                for (final item in _items)
+                  NavigationDestination(
+                    icon: Icon(item.icon, color: iconeInactive),
+                    selectedIcon: Icon(item.activeIcon, color: iconeActive),
+                    label: item.label,
+                  ),
+              ],
+            ),
+          ),
         ),
-      ),
+        Positioned(
+          top: -16,
+          right: 12,
+          child: Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) => Material(
+              color: couleurFond,
+              shape: const CircleBorder(),
+              elevation: 3,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => themeProvider.basculer(!themeProvider.estSombre),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    themeProvider.estSombre ? Icons.light_mode : Icons.dark_mode,
+                    size: 20,
+                    color: couleurToggle,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

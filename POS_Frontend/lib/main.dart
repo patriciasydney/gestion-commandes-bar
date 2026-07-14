@@ -12,22 +12,21 @@ import 'providers/categorie_provider.dart';
 import 'providers/panier_provider.dart';
 import 'providers/stock_provider.dart';
 import 'providers/utilisateur_provider.dart';
+import 'providers/theme_provider.dart';
 import 'routes/app_routes.dart';
 
 void main() {
-  // Verrouille l'orientation en mode portrait uniquement
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
-  // Configure le style de la barre de statut
+
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
   ));
-  
+
   runApp(const FrontBoissonApp());
 }
 
@@ -49,76 +48,75 @@ class FrontBoissonApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PanierProvider()),
         ChangeNotifierProvider(create: (_) => StockProvider()),
         ChangeNotifierProvider(create: (_) => UtilisateurProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp(
-        title: 'POS Débits de Boissons',
-        debugShowCheckedModeBanner: false,
-        
-        // Thème clair (par défaut)
-        theme: AppTheme.theme,
-        
-        // Thème sombre (automatique selon le système)
-        darkTheme: AppTheme.darkTheme,
-        
-        // Mode de thème : auto (suit les préférences système)
-        // Tu peux changer pour ThemeMode.light ou ThemeMode.dark si besoin
-        themeMode: ThemeMode.system,
-        
-        // Point d'entrée : session JWT ou login
-        initialRoute: AppRoutes.entry,
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                themeProvider.estSombre ? Brightness.light : Brightness.dark,
+            statusBarBrightness:
+                themeProvider.estSombre ? Brightness.dark : Brightness.light,
+          ));
 
-        // Table de routage
-        routes: {
-          AppRoutes.entry: (context) => const AppEntry(),
-          ...AppRoutes.routes,
-        },
+          return MaterialApp(
+            title: 'POS Débits de Boissons',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.theme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            initialRoute: AppRoutes.entry,
+            routes: {
+              AppRoutes.entry: (context) => const AppEntry(),
+              ...AppRoutes.routes,
+            },
+            onGenerateRoute: (settings) {
+              if (settings.name == AppRoutes.entry) {
+                return MaterialPageRoute(
+                  builder: (_) => const AppEntry(),
+                  settings: settings,
+                );
+              }
 
-        // Configuration des transitions de page
-        onGenerateRoute: (settings) {
-          if (settings.name == AppRoutes.entry) {
-            return MaterialPageRoute(
-              builder: (_) => const AppEntry(),
-              settings: settings,
-            );
-          }
-
-          final builder = AppRoutes.routes[settings.name];
-          if (builder != null) {
-            if (settings.name == AppRoutes.login) {
-              return MaterialPageRoute(builder: builder, settings: settings);
-            }
-            return MaterialPageRoute(
-              builder: (context) => AuthGuard(child: builder(context)),
-              settings: settings,
-            );
-          }
-          return null;
-        },
-        
-        // Gestion des routes inconnues
-        onUnknownRoute: (settings) {
-          return MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: const Text('Page introuvable')),
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.grey),
-                    const SizedBox(height: 16),
-                    Text(
-                      'La route "${settings.name}" n\'existe pas',
-                      style: const TextStyle(fontSize: 16),
+              final builder = AppRoutes.routes[settings.name];
+              if (builder != null) {
+                if (settings.name == AppRoutes.login) {
+                  return MaterialPageRoute(builder: builder, settings: settings);
+                }
+                return MaterialPageRoute(
+                  builder: (context) => AuthGuard(child: builder(context)),
+                  settings: settings,
+                );
+              }
+              return null;
+            },
+            onUnknownRoute: (settings) {
+              return MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: const Text('Page introuvable')),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text(
+                          'La route "${settings.name}" n\'existe pas',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () =>
+                              Navigator.pushReplacementNamed(context, '/dashboard'),
+                          child: const Text('Retour au tableau de bord'),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pushReplacementNamed(context, '/dashboard'),
-                      child: const Text('Retour au tableau de bord'),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           );
         },
       ),

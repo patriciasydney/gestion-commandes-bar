@@ -8,9 +8,7 @@ class ApiConstants {
   /// À repasser à false une fois le backend réel disponible.
   static const bool modeDemo = false;
 
-  static const String baseUrl = "http://localhost:8000/api";
-
-  // Endpoints — à ajuster une fois les routes Django connues.
+  static const String baseUrl = "http://localhost:8000/api"; // à changer en http://sport.services-ztf.com/api une fois le backend déployé
   static const String login = "/auth/login/";
   static const String produits = "/produits/";
   static const String categories = "/categories/";

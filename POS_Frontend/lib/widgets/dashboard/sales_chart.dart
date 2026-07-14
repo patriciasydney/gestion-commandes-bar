@@ -16,10 +16,19 @@ class SalesChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final jours = labels ?? const ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    final couleurBarres = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.orangeClair
+        : AppColors.bleuFonce;
 
-    return SizedBox(
+    return Container(
       height: 220,
       width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
       child: BarChart(
         BarChartData(
           gridData: const FlGridData(show: false),
@@ -33,7 +42,7 @@ class SalesChart extends StatelessWidget {
                 showTitles: true,
                 getTitlesWidget: (value, meta) => Text(
                   jours[value.toInt() % jours.length],
-                  style: const TextStyle(fontSize: 11, color: AppColors.texteClair),
+                  style: Theme.of(context).textTheme.labelSmall,
                 ),
               ),
             ),
@@ -43,7 +52,7 @@ class SalesChart extends StatelessWidget {
               BarChartGroupData(x: i, barRods: [
                 BarChartRodData(
                   toY: ventesParJour[i].toDouble(),
-                  color: AppColors.bleuFonce,
+                  color: couleurBarres,
                   width: 18,
                   borderRadius: BorderRadius.circular(4),
                 ),

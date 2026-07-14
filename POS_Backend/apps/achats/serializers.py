@@ -16,6 +16,9 @@ class DetailAchatInputSerializer(serializers.Serializer):
 
 
 class DetailAchatSerializer(serializers.ModelSerializer):
+    # GeneratedField (PostgreSQL) — déclaration explicite pour drf-spectacular / Swagger
+    sous_total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+
     class Meta:
         model = DetailAchat
         fields = ["id_detail", "produit", "quantite", "prix_unitaire", "sous_total"]

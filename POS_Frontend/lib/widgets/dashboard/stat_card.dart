@@ -25,7 +25,7 @@ class StatCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: const Color(0xFFE0E0E0), width: 1),
+        side: BorderSide(color: Theme.of(context).dividerColor, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -79,10 +79,7 @@ class StatCard extends StatelessWidget {
               children: [
                 Text(
                   titre,
-                  style: const TextStyle(
-                    color: AppColors.texteClair,
-                    fontSize: 12,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -92,8 +89,7 @@ class StatCard extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     valeur,
-                    style: const TextStyle(
-                      fontSize: 20,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),

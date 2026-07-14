@@ -31,6 +31,15 @@ class AppColors {
   static const Color texteClair = Color(0xFF94A3B8); // Texte tertiaire
   static const Color texteDesactive = Color(0xFFCBD5E1); // Texte désactivé
 
+  // Couleurs — mode sombre (choisi manuellement par l'utilisateur)
+  static const Color fondSombre = Color(0xFF0F172A);
+  static const Color surfaceSombre = Color(0xFF1E293B);
+  static const Color surfaceAltSombre = Color(0xFF273548);
+  static const Color bordureSombre = Color(0xFF334155);
+  static const Color texteSombre = Color(0xFFF1F5F9);
+  static const Color texteSecondaireSombre = Color(0xFFCBD5E1);
+  static const Color texteClairSombre = Color(0xFF94A3B8);
+
   // Gradients
   static const LinearGradient gradientBleu = LinearGradient(
     colors: [bleuFonce, bleuClair],

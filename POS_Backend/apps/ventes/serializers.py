@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.db import transaction
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.produits.models import Produit
@@ -48,6 +49,9 @@ class DetailVenteInputSerializer(serializers.Serializer):
 
 
 class DetailVenteSerializer(serializers.ModelSerializer):
+    # GeneratedField (PostgreSQL) — déclaration explicite pour drf-spectacular / Swagger
+    sous_total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+
     class Meta:
         model = DetailVente
         fields = ["id_detail", "produit", "quantite", "prix_unitaire", "sous_total"]
@@ -75,6 +79,7 @@ class VenteSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id_vente", "date_vente", "montant_total", "statut"]
 
+    @extend_schema_field(serializers.ListField(child=serializers.DictField()))
     def get_paiements(self, obj):
         from apps.paiements.serializers import PaiementSerializer
 

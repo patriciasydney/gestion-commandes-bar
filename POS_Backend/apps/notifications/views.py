@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -7,6 +8,7 @@ from .serializers import NotificationSerializer
 from .services import detecter_alertes
 
 
+@extend_schema(responses={200: NotificationSerializer(many=True)})
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def liste_notifications(request):
@@ -18,6 +20,7 @@ def liste_notifications(request):
     return Response(NotificationSerializer(qs, many=True).data)
 
 
+@extend_schema(request=None, responses={200: NotificationSerializer})
 @api_view(["PATCH"])
 @permission_classes([IsAuthenticated])
 def marquer_lue(request, pk):
