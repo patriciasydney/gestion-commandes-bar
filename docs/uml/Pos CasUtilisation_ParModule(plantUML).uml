@@ -1,0 +1,174 @@
+' ============================================================
+' 1. VUE D'ENSEMBLE (diagramme général) — chapitre 8.2.5
+' ============================================================
+@startuml 01_VueEnsemble
+
+left to right direction
+
+actor Utilisateur
+actor Administrateur
+actor "Gérant" as Gerant
+actor Caissier
+actor Magasinier
+actor Serveur
+actor Comptable
+
+Administrateur --|> Utilisateur
+Gerant --|> Utilisateur
+Caissier --|> Utilisateur
+Magasinier --|> Utilisateur
+Serveur --|> Utilisateur
+Comptable --|> Utilisateur
+
+rectangle "Application POS pour Débits de Boissons" {
+    usecase "S'authentifier" as UC_Auth
+    usecase "Administration\n(utilisateurs, paramètres)" as M_Admin
+    usecase "Gestion commerciale\n(produits, catégories, fournisseurs)" as M_Commerce
+    usecase "Point de vente\n(ventes, paiements, clients)" as M_POS
+    usecase "Achats & Stocks" as M_Achats
+    usecase "Comptabilité & Rapports" as M_Rapports
+}
+
+Utilisateur --> UC_Auth
+
+Administrateur --> M_Admin
+Administrateur --> M_Rapports
+
+Gerant --> M_Commerce
+Gerant --> M_Achats
+Gerant --> M_Rapports
+
+Caissier --> M_POS
+
+Serveur --> M_POS
+
+Magasinier --> M_Achats
+
+Comptable --> M_Rapports
+
+@enduml
+
+
+' ============================================================
+' 2. DIAGRAMME DÉTAILLÉ — ADMINISTRATION
+' ============================================================
+@startuml 02_Administration
+
+actor Administrateur
+
+rectangle "Module Administration" {
+    usecase "Gérer les utilisateurs" as UC_Users
+    usecase "Attribuer un rôle" as UC_Roles
+    usecase "Configurer les paramètres" as UC_Parametres
+    usecase "Consulter le tableau de bord" as UC_Dashboard
+    usecase "Générer des rapports" as UC_Rapports
+}
+
+Administrateur --> UC_Users
+Administrateur --> UC_Roles
+Administrateur --> UC_Parametres
+Administrateur --> UC_Dashboard
+Administrateur --> UC_Rapports
+
+UC_Users .> UC_Roles : <<include>>
+
+@enduml
+
+
+' ============================================================
+' 3. DIAGRAMME DÉTAILLÉ — GESTION COMMERCIALE
+' ============================================================
+@startuml 03_GestionCommerciale
+
+actor "Gérant" as Gerant
+
+rectangle "Module Gestion Commerciale" {
+    usecase "Gérer les produits" as UC_Produits
+    usecase "Gérer les catégories" as UC_Categories
+    usecase "Gérer les fournisseurs" as UC_Fournisseurs
+    usecase "Consulter le tableau de bord" as UC_Dashboard
+    usecase "Générer des rapports" as UC_Rapports
+}
+
+Gerant --> UC_Produits
+Gerant --> UC_Categories
+Gerant --> UC_Fournisseurs
+Gerant --> UC_Dashboard
+Gerant --> UC_Rapports
+
+UC_Produits .> UC_Categories : <<include>>
+
+@enduml
+
+
+' ============================================================
+' 4. DIAGRAMME DÉTAILLÉ — POINT DE VENTE / CAISSE
+' ============================================================
+@startuml 04_PointDeVente
+
+actor Caissier
+actor Serveur
+
+rectangle "Module Point de Vente" {
+    usecase "Gérer les ventes (POS)" as UC_Ventes
+    usecase "Gérer les paiements" as UC_Paiements
+    usecase "Gérer les clients" as UC_Clients
+}
+
+Caissier --> UC_Ventes
+Caissier --> UC_Paiements
+Caissier --> UC_Clients
+
+Serveur --> UC_Ventes
+
+UC_Ventes .> UC_Paiements : <<include>>
+
+@enduml
+
+
+' ============================================================
+' 5. DIAGRAMME DÉTAILLÉ — ACHATS & STOCKS
+' ============================================================
+@startuml 05_AchatsStocks
+
+actor Magasinier
+actor "Gérant" as Gerant
+
+rectangle "Module Achats & Stocks" {
+    usecase "Gérer les achats" as UC_Achats
+    usecase "Gérer les stocks" as UC_Stocks
+}
+
+Magasinier --> UC_Achats
+Magasinier --> UC_Stocks
+Gerant --> UC_Stocks
+
+UC_Achats .> UC_Stocks : <<include>>
+
+@enduml
+
+
+' ============================================================
+' 6. DIAGRAMME DÉTAILLÉ — COMPTABILITÉ & RAPPORTS
+' ============================================================
+@startuml 06_ComptabiliteRapports
+
+actor Comptable
+actor "Gérant" as Gerant
+actor Administrateur
+
+rectangle "Module Comptabilité & Rapports" {
+    usecase "Générer des rapports" as UC_Rapports
+    usecase "Gérer les dépenses" as UC_Depenses
+    usecase "Consulter le tableau de bord" as UC_Dashboard
+}
+
+Comptable --> UC_Rapports
+Comptable --> UC_Depenses
+
+Gerant --> UC_Rapports
+Administrateur --> UC_Rapports
+
+UC_Rapports .> UC_Dashboard : <<extend>>
+
+@enduml

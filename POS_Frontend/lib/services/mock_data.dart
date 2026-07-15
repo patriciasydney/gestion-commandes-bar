@@ -89,6 +89,9 @@ class MockApi {
     {'id_role': 1, 'nom_role': 'Administrateur', 'description': 'Accès complet à toutes les fonctionnalités', 'actif': true},
     {'id_role': 2, 'nom_role': 'Gérant', 'description': 'Gestion des ventes, stocks et rapports', 'actif': true},
     {'id_role': 3, 'nom_role': 'Caissier', 'description': 'Encaissement et consultation du catalogue', 'actif': true},
+    {'id_role': 4, 'nom_role': 'Magasinier', 'description': 'Approvisionnements et mouvements de stock', 'actif': true},
+    {'id_role': 5, 'nom_role': 'Serveur', 'description': 'Prise de commandes clients', 'actif': true},
+    {'id_role': 6, 'nom_role': 'Comptable', 'description': 'Rapports financiers et dépenses', 'actif': true},
   ];
 
   // ---- Utilisateurs ----

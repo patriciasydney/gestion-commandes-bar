@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/auth/role_permissions.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/stock.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/produit_provider.dart';
 import '../../providers/stock_provider.dart';
 import '../../widgets/common/app_bottom_nav.dart';
@@ -279,6 +281,10 @@ class _StocksScreenState extends State<StocksScreen> {
   @override
   Widget build(BuildContext context) {
     final stockProvider = context.watch<StockProvider>();
+    final peutModifier = RolePermissions.canWrite(
+      AppModule.stocks,
+      context.watch<AuthProvider>().utilisateur,
+    );
 
     return Scaffold(
       appBar: AppHeader(title: 'Gestion des stocks'),
@@ -407,6 +413,7 @@ class _StocksScreenState extends State<StocksScreen> {
                     return _CarteStock(
                       nomProduit: _nomProduit(stock.produit),
                       stock: stock,
+                      modifiable: peutModifier,
                       onEntree: () => _ouvrirDialogueMouvement(stock, 'entree'),
                       onSortie: () => _ouvrirDialogueMouvement(stock, 'sortie'),
                       onSeuil: () => _ouvrirDialogueSeuil(stock),
@@ -468,6 +475,7 @@ class _StatBandeau extends StatelessWidget {
 class _CarteStock extends StatelessWidget {
   final String nomProduit;
   final Stock stock;
+  final bool modifiable;
   final VoidCallback onEntree;
   final VoidCallback onSortie;
   final VoidCallback onSeuil;
@@ -476,6 +484,7 @@ class _CarteStock extends StatelessWidget {
   const _CarteStock({
     required this.nomProduit,
     required this.stock,
+    required this.modifiable,
     required this.onEntree,
     required this.onSortie,
     required this.onSeuil,
@@ -571,23 +580,25 @@ class _CarteStock extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                TextButton.icon(
-                  onPressed: onEntree,
-                  icon: const Icon(Icons.add_circle, size: 18, color: AppColors.vert),
-                  label: const Text('Entrée',
-                      style: TextStyle(color: AppColors.vert)),
-                ),
-                TextButton.icon(
-                  onPressed: onSortie,
-                  icon: const Icon(Icons.remove_circle, size: 18, color: AppColors.rouge),
-                  label: const Text('Sortie',
-                      style: TextStyle(color: AppColors.rouge)),
-                ),
-                IconButton(
-                  tooltip: 'Ajuster le seuil',
-                  onPressed: onSeuil,
-                  icon: const Icon(Icons.tune, size: 18, color: AppColors.texteClair),
-                ),
+                if (modifiable) ...[
+                  TextButton.icon(
+                    onPressed: onEntree,
+                    icon: const Icon(Icons.add_circle, size: 18, color: AppColors.vert),
+                    label: const Text('Entrée',
+                        style: TextStyle(color: AppColors.vert)),
+                  ),
+                  TextButton.icon(
+                    onPressed: onSortie,
+                    icon: const Icon(Icons.remove_circle, size: 18, color: AppColors.rouge),
+                    label: const Text('Sortie',
+                        style: TextStyle(color: AppColors.rouge)),
+                  ),
+                  IconButton(
+                    tooltip: 'Ajuster le seuil',
+                    onPressed: onSeuil,
+                    icon: const Icon(Icons.tune, size: 18, color: AppColors.texteClair),
+                  ),
+                ],
                 IconButton(
                   tooltip: 'Historique',
                   onPressed: onHistorique,

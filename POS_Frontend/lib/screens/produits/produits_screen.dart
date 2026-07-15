@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_helpers.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/auth/role_permissions.dart';
 import '../../models/produit.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/categorie_provider.dart';
 import '../../providers/produit_provider.dart';
 import '../../routes/app_routes.dart';
@@ -80,17 +82,23 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
   Widget build(BuildContext context) {
     final produitProvider = context.watch<ProduitProvider>();
     final categorieProvider = context.watch<CategorieProvider>();
+    final peutModifier = RolePermissions.canWrite(
+      AppModule.produits,
+      context.watch<AuthProvider>().utilisateur,
+    );
 
     return Scaffold(
       appBar: AppHeader(title: 'Gestion des produits'),
       drawer: const AppDrawer(),
       bottomNavigationBar: const AppBottomNav(currentRoute: '/produits'),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _ouvrirFormulaire(),
-        icon: const Icon(Icons.add),
-        label: const Text('Ajouter'),
-        backgroundColor: AppColors.orange,
-      ),
+      floatingActionButton: peutModifier
+          ? FloatingActionButton.extended(
+              onPressed: () => _ouvrirFormulaire(),
+              icon: const Icon(Icons.add),
+              label: const Text('Ajouter'),
+              backgroundColor: AppColors.orange,
+            )
+          : null,
       body: Column(
         children: [
           Padding(
@@ -157,8 +165,9 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
                     return _LigneProduit(
                       produit: produit,
                       categorieNom: categorieProvider.nomCategorie(produit.categorie),
-                      onTap: () => _ouvrirFormulaire(produit: produit),
-                      onSupprimer: () => _confirmerSuppression(produit),
+                      modifiable: peutModifier,
+                      onTap: peutModifier ? () => _ouvrirFormulaire(produit: produit) : null,
+                      onSupprimer: peutModifier ? () => _confirmerSuppression(produit) : null,
                     );
                   },
                 ),
@@ -191,14 +200,16 @@ class _ChipCategorie extends StatelessWidget {
 class _LigneProduit extends StatelessWidget {
   final Produit produit;
   final String categorieNom;
-  final VoidCallback onTap;
-  final VoidCallback onSupprimer;
+  final bool modifiable;
+  final VoidCallback? onTap;
+  final VoidCallback? onSupprimer;
 
   const _LigneProduit({
     required this.produit,
     required this.categorieNom,
-    required this.onTap,
-    required this.onSupprimer,
+    required this.modifiable,
+    this.onTap,
+    this.onSupprimer,
   });
 
   @override
@@ -226,10 +237,11 @@ class _LigneProduit extends StatelessWidget {
                 padding: EdgeInsets.only(right: 4),
                 child: Icon(Icons.visibility_off_outlined, size: 18, color: AppColors.texteClair),
               ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.rouge),
-              onPressed: onSupprimer,
-            ),
+            if (modifiable && onSupprimer != null)
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: AppColors.rouge),
+                onPressed: onSupprimer,
+              ),
           ],
         ),
       ),

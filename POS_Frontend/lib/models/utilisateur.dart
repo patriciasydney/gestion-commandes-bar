@@ -38,6 +38,21 @@ class Utilisateur {
         roleLower.contains('admin');
   }
 
+  bool get isGerant =>
+      roleId == 2 || nomRole.toLowerCase().contains('gérant') || nomRole.toLowerCase() == 'gerant';
+
+  bool get isCaissier =>
+      roleId == 3 || nomRole.toLowerCase().contains('caissier');
+
+  bool get isMagasinier =>
+      roleId == 4 || nomRole.toLowerCase().contains('magasinier');
+
+  bool get isServeur =>
+      roleId == 5 || nomRole.toLowerCase().contains('serveur');
+
+  bool get isComptable =>
+      roleId == 6 || nomRole.toLowerCase().contains('comptable');
+
   factory Utilisateur.fromJson(Map<String, dynamic> json) {
     return Utilisateur(
       id: _parseInt(json['id']),

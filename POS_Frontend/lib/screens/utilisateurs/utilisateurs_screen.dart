@@ -57,11 +57,17 @@ class _UtilisateursScreenState extends State<UtilisateursScreen> {
   Color _couleurRole(int idRole) {
     switch (idRole) {
       case 1:
-        return AppColors.bleuFonce; // Admin
+        return AppColors.bleuFonce;
       case 2:
-        return AppColors.orange; // Gérant
+        return AppColors.orange;
       case 3:
-        return AppColors.vert; // Caissier
+        return AppColors.vert;
+      case 4:
+        return AppColors.jaune;
+      case 5:
+        return AppColors.orangeClair;
+      case 6:
+        return AppColors.bleuClair;
       default:
         return AppColors.texteClair;
     }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/auth/role_permissions.dart';
 import '../../core/theme/app_colors.dart';
+import '../../providers/auth_provider.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/validators.dart';
 import '../../models/client.dart';
@@ -252,16 +255,23 @@ class _ClientsScreenState extends State<ClientsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final peutModifier = RolePermissions.canWrite(
+      AppModule.clients,
+      context.watch<AuthProvider>().utilisateur,
+    );
+
     return Scaffold(
       appBar: AppHeader(title: 'Gestion des clients'),
       drawer: const AppDrawer(),
       bottomNavigationBar: const AppBottomNav(currentRoute: '/clients'),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _ouvrirFormulaire(),
-        icon: const Icon(Icons.person_add),
-        label: const Text('Nouveau client'),
-        backgroundColor: AppColors.orange,
-      ),
+      floatingActionButton: peutModifier
+          ? FloatingActionButton.extended(
+              onPressed: () => _ouvrirFormulaire(),
+              icon: const Icon(Icons.person_add),
+              label: const Text('Nouveau client'),
+              backgroundColor: AppColors.orange,
+            )
+          : null,
       body: Column(
         children: [
           // Bandeau résumé

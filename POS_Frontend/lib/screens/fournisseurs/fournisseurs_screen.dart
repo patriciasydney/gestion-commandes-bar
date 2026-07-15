@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/auth/role_permissions.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/validators.dart';
 import '../../models/fournisseur.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/fournisseur_service.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
@@ -160,16 +163,23 @@ class _FournisseursScreenState extends State<FournisseursScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final peutModifier = RolePermissions.canWrite(
+      AppModule.fournisseurs,
+      context.watch<AuthProvider>().utilisateur,
+    );
+
     return Scaffold(
       appBar: AppHeader(title: 'Gestion des fournisseurs'),
       drawer: const AppDrawer(),
       bottomNavigationBar: const AppBottomNav(currentRoute: '/fournisseurs'),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _ouvrirFormulaire(),
-        icon: const Icon(Icons.add),
-        label: const Text('Ajouter'),
-        backgroundColor: AppColors.orange,
-      ),
+      floatingActionButton: peutModifier
+          ? FloatingActionButton.extended(
+              onPressed: () => _ouvrirFormulaire(),
+              icon: const Icon(Icons.add),
+              label: const Text('Ajouter'),
+              backgroundColor: AppColors.orange,
+            )
+          : null,
       body: Builder(builder: (context) {
         if (_chargement) {
           return const Center(child: CircularProgressIndicator());

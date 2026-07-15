@@ -1,4 +1,7 @@
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+
+from apps.utilisateurs.permissions import CanManageCatalog
 
 from .models import Produit
 from .serializers import ProduitCreateSerializer, ProduitSerializer
@@ -7,6 +10,7 @@ from .serializers import ProduitCreateSerializer, ProduitSerializer
 class ProduitViewSet(viewsets.ModelViewSet):
     queryset = Produit.objects.select_related("categorie", "fournisseur").all()
     serializer_class = ProduitSerializer
+    permission_classes = [IsAuthenticated, CanManageCatalog]
 
     def get_serializer_class(self):
         if self.action == "create":

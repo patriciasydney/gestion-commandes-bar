@@ -1,26 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/auth/role_permissions.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 
-/// Barre de navigation basse, persistante sur tous les écrans principaux.
+/// Barre de navigation basse — destinations filtrées selon le rôle.
 class AppBottomNav extends StatelessWidget {
   final String currentRoute;
 
   const AppBottomNav({super.key, required this.currentRoute});
 
-  static const _items = [
-    (route: '/dashboard', icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard, label: 'Accueil'),
-    (route: '/pos', icon: Icons.point_of_sale_outlined, activeIcon: Icons.point_of_sale, label: 'Vente'),
-    (route: '/produits', icon: Icons.local_bar_outlined, activeIcon: Icons.local_bar, label: 'Produits'),
-    (route: '/stocks', icon: Icons.inventory_2_outlined, activeIcon: Icons.inventory_2, label: 'Stocks'),
-    (route: '/clients', icon: Icons.people_outline, activeIcon: Icons.people, label: 'Clients'),
-    (route: '/rapports', icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart, label: 'Rapports'),
-  ];
+  static const _icones = {
+    '/dashboard': (
+      icon: Icons.dashboard_outlined,
+      activeIcon: Icons.dashboard,
+    ),
+    '/pos': (
+      icon: Icons.point_of_sale_outlined,
+      activeIcon: Icons.point_of_sale,
+    ),
+    '/produits': (
+      icon: Icons.local_bar_outlined,
+      activeIcon: Icons.local_bar,
+    ),
+    '/stocks': (
+      icon: Icons.inventory_2_outlined,
+      activeIcon: Icons.inventory_2,
+    ),
+    '/clients': (
+      icon: Icons.people_outline,
+      activeIcon: Icons.people,
+    ),
+    '/rapports': (
+      icon: Icons.bar_chart_outlined,
+      activeIcon: Icons.bar_chart,
+    ),
+  };
 
   @override
   Widget build(BuildContext context) {
-    final selected = _items.indexWhere((i) => i.route == currentRoute);
+    final utilisateur = context.watch<AuthProvider>().utilisateur;
+    final items = RolePermissions.itemsNavigationPrincipale(utilisateur);
+
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    var selected = items.indexWhere((i) => i.route == currentRoute);
+    if (selected == -1) selected = 0;
+
     final estSombre = Theme.of(context).brightness == Brightness.dark;
 
     final couleurFond = Theme.of(context).colorScheme.surface;
@@ -49,7 +78,7 @@ class AppBottomNav extends StatelessWidget {
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
             child: NavigationBar(
-              selectedIndex: selected == -1 ? 0 : selected,
+              selectedIndex: selected,
               backgroundColor: couleurFond,
               indicatorColor: (estSombre ? AppColors.orangeClair : AppColors.bleuFonce)
                   .withValues(alpha: 0.12),
@@ -57,14 +86,20 @@ class AppBottomNav extends StatelessWidget {
               height: 66,
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               onDestinationSelected: (i) {
-                if (_items[i].route == currentRoute) return;
-                Navigator.pushReplacementNamed(context, _items[i].route);
+                if (items[i].route == currentRoute) return;
+                Navigator.pushReplacementNamed(context, items[i].route);
               },
               destinations: [
-                for (final item in _items)
+                for (final item in items)
                   NavigationDestination(
-                    icon: Icon(item.icon, color: iconeInactive),
-                    selectedIcon: Icon(item.activeIcon, color: iconeActive),
+                    icon: Icon(
+                      _icones[item.route]?.icon ?? Icons.circle_outlined,
+                      color: iconeInactive,
+                    ),
+                    selectedIcon: Icon(
+                      _icones[item.route]?.activeIcon ?? Icons.circle,
+                      color: iconeActive,
+                    ),
                     label: item.label,
                   ),
               ],

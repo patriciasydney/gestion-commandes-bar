@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_helpers.dart';
 import '../../core/utils/validators.dart';
+import '../../core/auth/role_permissions.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/app_text_field.dart';
@@ -37,7 +38,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (succes && mounted) {
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      final route = RolePermissions.routeAccueil(auth.utilisateur);
+      Navigator.pushReplacementNamed(context, route);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.erreur ?? "Erreur de connexion")),

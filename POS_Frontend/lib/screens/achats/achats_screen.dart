@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/auth/role_permissions.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/achat.dart';
 import '../../models/produit.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/produit_provider.dart';
 import '../../services/achat_service.dart';
 import '../../services/fournisseur_service.dart';
@@ -80,16 +82,23 @@ class _AchatsScreenState extends State<AchatsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final peutModifier = RolePermissions.canWrite(
+      AppModule.achats,
+      context.watch<AuthProvider>().utilisateur,
+    );
+
     return Scaffold(
       appBar: AppHeader(title: 'Achats / Approvisionnements'),
       drawer: const AppDrawer(),
       bottomNavigationBar: const AppBottomNav(currentRoute: '/achats'),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _ouvrirFormulaireNouvelAchat,
-        icon: const Icon(Icons.add),
-        label: const Text('Nouvel achat'),
-        backgroundColor: AppColors.orange,
-      ),
+      floatingActionButton: peutModifier
+          ? FloatingActionButton.extended(
+              onPressed: _ouvrirFormulaireNouvelAchat,
+              icon: const Icon(Icons.add),
+              label: const Text('Nouvel achat'),
+              backgroundColor: AppColors.orange,
+            )
+          : null,
       body: Builder(builder: (context) {
         if (_chargement) return const Center(child: CircularProgressIndicator());
         if (_erreur != null) {

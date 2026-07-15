@@ -1,6 +1,9 @@
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from apps.utilisateurs.permissions import CanManageAchats, IsGerantOrAdmin
 
 from .models import Achat
 from .serializers import (
@@ -13,6 +16,11 @@ from .serializers import (
 class AchatViewSet(viewsets.ModelViewSet):
     queryset = Achat.objects.all().order_by("-date_achat")
     serializer_class = AchatSerializer
+
+    def get_permissions(self):
+        if self.action == "annuler":
+            return [IsAuthenticated(), IsGerantOrAdmin()]
+        return [IsAuthenticated(), CanManageAchats()]
 
     def get_serializer_class(self):
         if self.action == "create":

@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/auth/role_permissions.dart';
 import '../../providers/auth_provider.dart';
 
-/// Menu latéral de navigation entre les modules de l'application.
-/// Permet de tester la navigation entre tous les écrans dès aujourd'hui,
-/// même avant que chaque écran soit pleinement fonctionnel.
+/// Menu latéral de navigation — items filtrés selon le rôle connecté.
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
-  static const _items = [
-    ("Tableau de bord", Icons.dashboard, "/dashboard"),
-    ("Point de vente", Icons.point_of_sale, "/pos"),
-    ("Produits", Icons.local_bar, "/produits"),
-    ("Catégories", Icons.category, "/categories"),
-    ("Stocks", Icons.inventory_2, "/stocks"),
-    ("Fournisseurs", Icons.local_shipping, "/fournisseurs"),
-    ("Clients", Icons.people, "/clients"),
-    ("Achats", Icons.shopping_cart, "/achats"),
-    ("Dépenses", Icons.receipt_long, "/depenses"),
-    ("Utilisateurs", Icons.admin_panel_settings, "/utilisateurs"),
-    ("Rapports", Icons.bar_chart, "/rapports"),
-    ("Paramètres", Icons.settings, "/parametres"),
-  ];
+  static const _icones = {
+    '/dashboard': Icons.dashboard,
+    '/pos': Icons.point_of_sale,
+    '/produits': Icons.local_bar,
+    '/categories': Icons.category,
+    '/stocks': Icons.inventory_2,
+    '/fournisseurs': Icons.local_shipping,
+    '/clients': Icons.people,
+    '/achats': Icons.shopping_cart,
+    '/depenses': Icons.receipt_long,
+    '/utilisateurs': Icons.admin_panel_settings,
+    '/rapports': Icons.bar_chart,
+    '/parametres': Icons.settings,
+  };
 
   Future<void> _deconnecter(BuildContext context) async {
     final confirme = await showDialog<bool>(
@@ -54,7 +53,9 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final utilisateur = context.watch<AuthProvider>().utilisateur;
+    final auth = context.watch<AuthProvider>();
+    final utilisateur = auth.utilisateur;
+    final items = RolePermissions.itemsMenuLateral(utilisateur);
 
     return Drawer(
       child: ListView(
@@ -83,17 +84,23 @@ class AppDrawer extends StatelessWidget {
                     "${utilisateur.prenom} ${utilisateur.nom}",
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
+                  if (utilisateur.nomRole.isNotEmpty)
+                    Text(
+                      utilisateur.nomRole,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
                 ],
               ],
             ),
           ),
-          for (final (label, icone, route) in _items)
+          for (final item in items)
             ListTile(
-              leading: Icon(icone),
-              title: Text(label),
+              leading: Icon(_icones[item.route] ?? Icons.circle_outlined),
+              title: Text(item.label),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, route);
+                if (ModalRoute.of(context)?.settings.name == item.route) return;
+                Navigator.pushReplacementNamed(context, item.route);
               },
             ),
           const Divider(),

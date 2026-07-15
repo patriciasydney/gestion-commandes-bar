@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/validators.dart';
+import '../../core/auth/role_permissions.dart';
 import '../../models/categorie.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/categorie_provider.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
@@ -132,17 +134,23 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CategorieProvider>();
+    final peutModifier = RolePermissions.canWrite(
+      AppModule.categories,
+      context.watch<AuthProvider>().utilisateur,
+    );
 
     return Scaffold(
       appBar: AppHeader(title: 'Gestion des catégories'),
       drawer: const AppDrawer(),
       bottomNavigationBar: const AppBottomNav(currentRoute: '/categories'),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _ouvrirFormulaire(),
-        icon: const Icon(Icons.add),
-        label: const Text('Ajouter'),
-        backgroundColor: AppColors.orange,
-      ),
+      floatingActionButton: peutModifier
+          ? FloatingActionButton.extended(
+              onPressed: () => _ouvrirFormulaire(),
+              icon: const Icon(Icons.add),
+              label: const Text('Ajouter'),
+              backgroundColor: AppColors.orange,
+            )
+          : null,
       body: Builder(builder: (context) {
         if (provider.chargement) {
           return const Center(child: CircularProgressIndicator());
@@ -162,17 +170,19 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             return Card(
               margin: EdgeInsets.zero,
               child: ListTile(
-                onTap: () => _ouvrirFormulaire(categorie: categorie),
+                onTap: peutModifier ? () => _ouvrirFormulaire(categorie: categorie) : null,
                 leading: CircleAvatar(
                   backgroundColor: AppColors.bleuFonce.withValues(alpha: 0.1),
                   child: const Icon(Icons.category_outlined, color: AppColors.bleuFonce),
                 ),
                 title: Text(categorie.nom, style: const TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: categorie.description != null ? Text(categorie.description!) : null,
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline, color: AppColors.rouge),
-                  onPressed: () => _confirmerSuppression(categorie),
-                ),
+                trailing: peutModifier
+                    ? IconButton(
+                        icon: const Icon(Icons.delete_outline, color: AppColors.rouge),
+                        onPressed: () => _confirmerSuppression(categorie),
+                      )
+                    : null,
               ),
             );
           },

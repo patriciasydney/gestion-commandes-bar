@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'core/auth/auth_guard.dart';
+import 'core/auth/role_guard.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/caisse_provider.dart';
 import 'providers/auth_provider.dart';
@@ -84,8 +85,15 @@ class FrontBoissonApp extends StatelessWidget {
                 if (settings.name == AppRoutes.login) {
                   return MaterialPageRoute(builder: builder, settings: settings);
                 }
+                final routeName = settings.name!;
                 return MaterialPageRoute(
-                  builder: (context) => AuthGuard(child: builder(context)),
+                  builder: (context) => AuthGuard(
+                    child: RoleGuard(
+                      route: routeName,
+                      titre: routeTitles[routeName] ?? 'ATSYS_POS',
+                      child: builder(context),
+                    ),
+                  ),
                   settings: settings,
                 );
               }
