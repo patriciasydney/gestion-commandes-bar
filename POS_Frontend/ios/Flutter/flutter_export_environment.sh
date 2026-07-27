@@ -1,7 +1,8 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
 export "FLUTTER_ROOT=/home/klasse/flutter"
-export "FLUTTER_APPLICATION_PATH=/home/klasse/ATSYS_POS/gestion-commandes-bar/POS_Frontend/Front-boisson"
+export "FLUTTER_APPLICATION_PATH=/home/klasse/ATSYS_POS/gestion-commandes-bar/POS_Frontend"
+export "FLUTTER_FRAMEWORK_SWIFT_PACKAGE_PATH=/home/klasse/ATSYS_POS/gestion-commandes-bar/POS_Frontend/ios/Flutter/ephemeral/Packages/.packages/FlutterFramework"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib/main.dart"
 export "FLUTTER_BUILD_DIR=build"

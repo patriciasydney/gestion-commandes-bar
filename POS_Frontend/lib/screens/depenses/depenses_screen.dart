@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth/role_permissions.dart';
+import '../../core/constants/depense_categories.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/validators.dart';
@@ -32,18 +33,7 @@ class _DepensesScreenState extends State<DepensesScreen> {
   List<Depense> _depenses = [];
   bool _chargement = false;
   String? _erreur;
-  String _filtreCategorie = 'Toutes';
-
-  static const List<String> _categories = [
-    'Toutes',
-    'Charges fixes',
-    'Carburant',
-    'Fournitures',
-    'Salaires',
-    'Maintenance',
-    'Marketing',
-    'Autre',
-  ];
+  String _filtreCategorie = DepenseCategories.toutes;
 
   @override
   void initState() {
@@ -65,8 +55,9 @@ class _DepensesScreenState extends State<DepensesScreen> {
   }
 
   List<Depense> get _depensesFiltrees {
-    if (_filtreCategorie == 'Toutes') return _depenses;
-    return _depenses.where((d) => d.categorie == _filtreCategorie).toList();
+    return _depenses
+        .where((d) => DepenseCategories.correspondFiltre(d.categorie, _filtreCategorie))
+        .toList();
   }
 
   double get _totalFiltre {
@@ -174,7 +165,7 @@ class _DepensesScreenState extends State<DepensesScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               children: [
-                for (final c in _categories)
+                for (final c in DepenseCategories.filtres)
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: FilterChoiceChip(
@@ -228,7 +219,7 @@ class _DepensesScreenState extends State<DepensesScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 4),
-                            Text(d.categorie,
+                            Text(DepenseCategories.normaliser(d.categorie),
                                 style: const TextStyle(
                                     color: AppColors.bleuFonce, fontSize: 12)),
                             Text(Formatters.date(d.dateDepense),
@@ -284,18 +275,8 @@ class _FormulaireDepenseState extends State<_FormulaireDepense> {
   final _libelleCtrl = TextEditingController();
   final _montantCtrl = TextEditingController();
   late DateTime _date;
-  String _categorie = 'Charges fixes';
+  String _categorie = DepenseCategories.saisie.first;
   bool _enregistrement = false;
-
-  static const List<String> _categories = [
-    'Charges fixes',
-    'Carburant',
-    'Fournitures',
-    'Salaires',
-    'Maintenance',
-    'Marketing',
-    'Autre',
-  ];
 
   @override
   void initState() {
@@ -305,7 +286,7 @@ class _FormulaireDepenseState extends State<_FormulaireDepense> {
       _libelleCtrl.text = d.libelle;
       _montantCtrl.text = d.montant.toStringAsFixed(0);
       _date = d.dateDepense;
-      _categorie = d.categorie;
+      _categorie = DepenseCategories.normaliser(d.categorie);
     } else {
       _date = DateTime.now();
     }
@@ -393,7 +374,7 @@ class _FormulaireDepenseState extends State<_FormulaireDepense> {
                 initialValue: _categorie,
                 decoration: const InputDecoration(labelText: 'Catégorie'),
                 items: [
-                  for (final c in _categories)
+                  for (final c in DepenseCategories.saisie)
                     DropdownMenuItem(value: c, child: Text(c)),
                 ],
                 onChanged: (v) => setState(() => _categorie = v ?? _categorie),
