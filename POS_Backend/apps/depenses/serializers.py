@@ -1,9 +1,12 @@
 from rest_framework import serializers
 
+from .constants import CATEGORIES_DEPENSE
 from .models import Depense
 
 
 class DepenseSerializer(serializers.ModelSerializer):
+    categorie = serializers.ChoiceField(choices=[(c, c) for c in CATEGORIES_DEPENSE])
+
     class Meta:
         model = Depense
         fields = [

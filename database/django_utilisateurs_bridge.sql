@@ -13,3 +13,7 @@ ALTER TABLE utilisateurs
 
 -- Synchroniser is_active avec le statut métier existant
 UPDATE utilisateurs SET is_active = (statut = 'actif');
+
+-- L'administrateur doit avoir is_staff = TRUE (accès admin Django / futures vérifs de permission)
+UPDATE utilisateurs SET is_staff = TRUE
+    WHERE id_role = (SELECT id_role FROM roles WHERE nom_role = 'Administrateur');
