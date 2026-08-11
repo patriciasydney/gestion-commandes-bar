@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/depense_service.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/app_skeleton.dart';
 import '../../core/theme/theme_helpers.dart';
 import '../../widgets/common/filter_choice_chip.dart';
 import '../../widgets/common/app_bottom_nav.dart';
@@ -181,7 +182,7 @@ class _DepensesScreenState extends State<DepensesScreen> {
           Expanded(
             child: Builder(builder: (context) {
               if (_chargement) {
-                return const Center(child: CircularProgressIndicator());
+                return const SkeletonList();
               }
               if (_erreur != null) {
                 return Center(child: Text(_erreur!,

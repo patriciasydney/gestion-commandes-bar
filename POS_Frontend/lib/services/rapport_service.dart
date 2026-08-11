@@ -65,11 +65,14 @@ class RapportService {
 
     return RapportComplet(
       libellePeriode: preset.libelle,
+      dateDebut: preset.debut,
+      dateFin: preset.fin,
       chiffreAffaires: ventes.totalVentes,
       nombreVentes: ventes.nombreVentes,
       depensesTotal: depensesTotal,
       achatsTotal: achats.totalAchats,
       nombreAchats: achats.nombreAchats,
+      detailParJour: ventes.detailParJour,
       topProduits: topProduits,
       depensesParCategorie: depenses,
       achatsParFournisseur: achats.parFournisseur,

@@ -77,6 +77,17 @@ class DateRange {
     );
   }
 
+  /// 30 derniers jours calendaires (J-29 … aujourd'hui).
+  static PeriodePreset trenteDerniersJours() {
+    final today = dateOnly(DateTime.now());
+    final debut = today.subtract(const Duration(days: 29));
+    return PeriodePreset(
+      debut: debut,
+      fin: today,
+      libelle: '30 derniers jours',
+    );
+  }
+
   static String queryParams({DateTime? dateDebut, DateTime? dateFin}) {
     final params = <String, String>{};
     if (dateDebut != null) params['date_debut'] = toApiDate(dateDebut);

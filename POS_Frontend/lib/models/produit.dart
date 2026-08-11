@@ -59,6 +59,8 @@ class Produit {
   }
 
   /// Payload POST/PUT — clés attendues par `ProduitSerializer`.
+  /// `image` n'est jamais envoyé : le backend n'accepte qu'un chemin ≤255
+  /// caractères, pas une photo base64 (sinon PUT 400).
   Map<String, dynamic> toJson() {
     return {
       'code': code,
@@ -72,7 +74,6 @@ class Produit {
       'actif': actif,
       'categorie': categorie,
       if (fournisseur != null) 'fournisseur': fournisseur,
-      if (image != null) 'image': image,
     };
   }
 

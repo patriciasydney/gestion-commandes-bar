@@ -10,6 +10,7 @@ import '../../providers/stock_provider.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/app_skeleton.dart';
 import '../../core/theme/theme_helpers.dart';
 import '../../widgets/common/filter_choice_chip.dart';
 
@@ -376,7 +377,7 @@ class _StocksScreenState extends State<StocksScreen> {
           Expanded(
             child: Builder(builder: (context) {
               if (stockProvider.chargement) {
-                return const Center(child: CircularProgressIndicator());
+                return const SkeletonList();
               }
               if (stockProvider.erreur != null) {
                 return Center(

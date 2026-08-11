@@ -150,23 +150,38 @@ class RolePermissions {
     return AppRoutes.dashboard;
   }
 
+  /// Destinations de la barre basse — max ~4, adaptées au rôle.
+  /// Le reste reste accessible via le menu latéral.
   static List<({String route, String label})> itemsNavigationPrincipale(
     Utilisateur? user,
   ) {
-    const candidats = [
-      (route: AppRoutes.dashboard, label: 'Accueil', module: AppModule.dashboard),
-      (route: AppRoutes.pos, label: 'POS', module: AppModule.pos),
-      (route: AppRoutes.commandesAttente, label: 'Commandes', module: AppModule.commandesAttente),
-      (route: AppRoutes.ventes, label: 'Ventes', module: AppModule.ventes),
-      (route: AppRoutes.produits, label: 'Produits', module: AppModule.produits),
-      (route: AppRoutes.stocks, label: 'Stocks', module: AppModule.stocks),
-      (route: AppRoutes.clients, label: 'Clients', module: AppModule.clients),
-      (route: AppRoutes.rapports, label: 'Rapports', module: AppModule.rapports),
+    if (user == null) return const [];
+
+    final priorite = <(String route, String label, AppModule module)>[
+      if (user.isCaissier || user.isServeur) ...[
+        (AppRoutes.pos, 'POS', AppModule.pos),
+        (AppRoutes.commandesAttente, 'Commandes', AppModule.commandesAttente),
+        (AppRoutes.ventes, 'Ventes', AppModule.ventes),
+      ] else if (user.isMagasinier) ...[
+        (AppRoutes.stocks, 'Stocks', AppModule.stocks),
+        (AppRoutes.achats, 'Achats', AppModule.achats),
+        (AppRoutes.produits, 'Produits', AppModule.produits),
+      ] else if (user.isComptable) ...[
+        (AppRoutes.rapports, 'Rapports', AppModule.rapports),
+        (AppRoutes.depenses, 'Dépenses', AppModule.depenses),
+        (AppRoutes.dashboard, 'Accueil', AppModule.dashboard),
+      ] else ...[
+        // Admin / gérant (et rôles mixtes)
+        (AppRoutes.dashboard, 'Accueil', AppModule.dashboard),
+        (AppRoutes.pos, 'POS', AppModule.pos),
+        (AppRoutes.stocks, 'Stocks', AppModule.stocks),
+        (AppRoutes.rapports, 'Rapports', AppModule.rapports),
+      ],
     ];
 
-    return candidats
-        .where((item) => canAccess(item.module, user))
-        .map((item) => (route: item.route, label: item.label))
+    return priorite
+        .where((item) => canAccess(item.$3, user))
+        .map((item) => (route: item.$1, label: item.$2))
         .toList();
   }
 

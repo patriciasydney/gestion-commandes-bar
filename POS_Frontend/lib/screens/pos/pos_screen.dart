@@ -9,6 +9,7 @@ import '../../models/caisse.dart';
 import '../../models/vente.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/caisse_provider.dart';
+import '../../providers/categorie_provider.dart';
 import '../../providers/panier_provider.dart';
 import '../../providers/produit_provider.dart';
 import '../../services/client_service.dart';
@@ -16,6 +17,7 @@ import '../../services/vente_service.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/app_skeleton.dart';
 import '../../widgets/pos/cart_item_tile.dart';
 import '../../widgets/pos/product_card.dart';
 
@@ -39,7 +41,11 @@ class _PosScreenState extends State<PosScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProduitProvider>().chargerProduits();
+      final produits = context.read<ProduitProvider>();
+      produits.filtrerParCategorie(null);
+      produits.rechercher('');
+      produits.chargerProduits();
+      context.read<CategorieProvider>().chargerCategories();
       final auth = context.read<AuthProvider>();
       final user = auth.utilisateur;
       // Le serveur rattache ses commandes à la caisse déjà ouverte par le caissier.
@@ -618,6 +624,12 @@ class _Catalogue extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ProduitProvider>();
+    final categories = context
+        .watch<CategorieProvider>()
+        .categoriesActives;
+
+    final produitsAffiches =
+        provider.produits.where((p) => p.actif).toList();
 
     return Column(
       children: [
@@ -630,7 +642,8 @@ class _Catalogue extends StatelessWidget {
                   hintText: 'Rechercher un produit (nom ou code-barres)…',
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  fillColor:
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -638,6 +651,40 @@ class _Catalogue extends StatelessWidget {
                 ),
                 onChanged: provider.rechercher,
               ),
+              if (categories.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 40,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: const Text('Toutes'),
+                          selected: provider.filtreCategorie == null,
+                          onSelected: (_) =>
+                              provider.filtrerParCategorie(null),
+                        ),
+                      ),
+                      for (final c in categories)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(c.nom),
+                            selected:
+                                provider.filtreCategorie == c.idCategorie,
+                            onSelected: (_) => provider.filtrerParCategorie(
+                              provider.filtreCategorie == c.idCategorie
+                                  ? null
+                                  : c.idCategorie,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -689,16 +736,22 @@ class _Catalogue extends StatelessWidget {
         Expanded(
           child: Builder(builder: (context) {
             if (provider.chargement) {
-              return const Center(child: CircularProgressIndicator());
+              return const SkeletonProductGrid();
             }
             if (provider.erreur != null) {
               return Center(
-                child: Text(provider.erreur!, style: const TextStyle(color: AppColors.rouge)),
+                child: Text(
+                  provider.erreur!,
+                  style: const TextStyle(color: AppColors.rouge),
+                ),
               );
             }
-            if (provider.produits.isEmpty) {
+            if (produitsAffiches.isEmpty) {
               return const Center(
-                child: Text('Aucun produit trouvé', style: TextStyle(color: AppColors.texteClair)),
+                child: Text(
+                  'Aucun produit trouvé',
+                  style: TextStyle(color: AppColors.texteClair),
+                ),
               );
             }
             return GridView.builder(
@@ -709,12 +762,13 @@ class _Catalogue extends StatelessWidget {
                 crossAxisSpacing: 12,
                 childAspectRatio: 1.1,
               ),
-              itemCount: provider.produits.length,
+              itemCount: produitsAffiches.length,
               itemBuilder: (context, i) {
-                final produit = provider.produits[i];
+                final produit = produitsAffiches[i];
                 return ProductCard(
                   produit: produit,
-                  onTap: () => context.read<PanierProvider>().ajouterProduit(produit),
+                  onTap: () =>
+                      context.read<PanierProvider>().ajouterProduit(produit),
                 );
               },
             );

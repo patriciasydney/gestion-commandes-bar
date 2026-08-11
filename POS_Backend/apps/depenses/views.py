@@ -28,3 +28,13 @@ class DepenseViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context["request"] = self.request
         return context
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        date_debut = self.request.query_params.get("date_debut")
+        date_fin = self.request.query_params.get("date_fin")
+        if date_debut:
+            qs = qs.filter(date_depense__date__gte=date_debut)
+        if date_fin:
+            qs = qs.filter(date_depense__date__lte=date_fin)
+        return qs

@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/fournisseur_service.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/app_skeleton.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 
 /// Écran : Gestion des fournisseurs — cahier des charges §5.6
@@ -182,7 +183,7 @@ class _FournisseursScreenState extends State<FournisseursScreen> {
           : null,
       body: Builder(builder: (context) {
         if (_chargement) {
-          return const Center(child: CircularProgressIndicator());
+          return const SkeletonList();
         }
         if (_erreur != null) {
           return Center(child: Text(_erreur!, style: const TextStyle(color: AppColors.rouge)));

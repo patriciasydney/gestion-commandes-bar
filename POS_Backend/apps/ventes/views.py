@@ -74,7 +74,7 @@ class CaisseViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
 class VenteViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
     queryset = Vente.objects.all().select_related(
         "utilisateur", "client", "caisse"
-    ).prefetch_related("details", "paiements").order_by("-date_vente")
+    ).prefetch_related("details__produit", "paiements").order_by("-date_vente")
     serializer_class = VenteSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["statut", "caisse", "utilisateur"]
@@ -109,6 +109,13 @@ class VenteViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
         # Le serveur ne voit que ses propres commandes/ventes.
         if role == RoleNames.SERVEUR:
             qs = qs.filter(utilisateur=self.request.user)
+
+        date_debut = self.request.query_params.get("date_debut")
+        date_fin = self.request.query_params.get("date_fin")
+        if date_debut:
+            qs = qs.filter(date_vente__date__gte=date_debut)
+        if date_fin:
+            qs = qs.filter(date_vente__date__lte=date_fin)
         return qs
 
     def create(self, request, *args, **kwargs):

@@ -14,7 +14,12 @@ from .serializers import (
 
 
 class AchatViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
-    queryset = Achat.objects.all().order_by("-date_achat")
+    queryset = (
+        Achat.objects.all()
+        .select_related("fournisseur", "utilisateur")
+        .prefetch_related("details__produit")
+        .order_by("-date_achat")
+    )
     serializer_class = AchatSerializer
 
     role_permissions = {
@@ -27,6 +32,16 @@ class AchatViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
         "annuler": [IsGerantOrAdmin],
         "default": [IsAchatOperator],
     }
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        date_debut = self.request.query_params.get("date_debut")
+        date_fin = self.request.query_params.get("date_fin")
+        if date_debut:
+            qs = qs.filter(date_achat__date__gte=date_debut)
+        if date_fin:
+            qs = qs.filter(date_achat__date__lte=date_fin)
+        return qs
 
     def get_serializer_class(self):
         if self.action == "create":

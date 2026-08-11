@@ -8,13 +8,15 @@ import '../../providers/dashboard_provider.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/app_skeleton.dart';
+import '../../widgets/common/filter_choice_chip.dart';
 import '../../widgets/dashboard/stat_card.dart';
 import '../../widgets/dashboard/sales_chart.dart';
 import '../../widgets/dashboard/stock_alert_tile.dart';
 import '../../widgets/dashboard/quick_access_button.dart';
+import '../../widgets/ventes/ventes_periode_sheet.dart';
 
 /// Écran : Tableau de bord — cahier des charges §10.3
-/// Version améliorée avec design moderne et indicateurs de tendance
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -23,15 +25,38 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  DashboardProvider? _dashboard;
+
+  static const _periodes = [
+    ('jour', "Aujourd'hui", Icons.today),
+    ('7j', '7 jours', Icons.date_range),
+    ('30j', '30 jours', Icons.calendar_month),
+  ];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DashboardProvider>().chargerDonnees();
+      if (!mounted) return;
+      final dash = context.read<DashboardProvider>();
+      _dashboard = dash;
+      dash.chargerDonnees();
+      dash.demarrerAutoRefresh();
     });
   }
 
-  Widget _sectionHeader(BuildContext context, String titre, IconData icone, {String? sousTitre}) {
+  @override
+  void dispose() {
+    _dashboard?.arreterAutoRefresh();
+    super.dispose();
+  }
+
+  Widget _sectionHeader(
+    BuildContext context,
+    String titre,
+    IconData icone, {
+    String? sousTitre,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16, top: 8),
       child: Row(
@@ -52,8 +77,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   titre,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 if (sousTitre != null)
                   Text(
@@ -68,6 +93,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _selecteurPeriode(DashboardProvider provider, double width) {
+    final chips = [
+      for (final (valeur, label, icone) in _periodes)
+        FilterChoiceChip(
+          label: label,
+          icon: icone,
+          selected: provider.periodeActive == valeur,
+          onSelected: () => provider.changerPeriode(valeur),
+        ),
+    ];
+
+    if (width < ResponsiveBreakpoints.phone) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: chips,
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final chip in chips)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: chip,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _controlesGraphique(DashboardProvider provider, double width) {
+    final segments = SegmentedButton<ModeGraphiqueVentes>(
+      segments: [
+        ButtonSegment(
+          value: ModeGraphiqueVentes.barres,
+          icon: const Icon(Icons.bar_chart, size: 18),
+          label: width < 360 ? null : const Text('Barres'),
+        ),
+        ButtonSegment(
+          value: ModeGraphiqueVentes.courbe,
+          icon: const Icon(Icons.show_chart, size: 18),
+          label: width < 360 ? null : const Text('Courbe'),
+        ),
+      ],
+      selected: {provider.modeGraphique},
+      onSelectionChanged: (s) => provider.changerModeGraphique(s.first),
+      style: const ButtonStyle(visualDensity: VisualDensity.compact),
+    );
+
+    if (width < ResponsiveBreakpoints.phone) {
+      return Align(alignment: Alignment.centerLeft, child: segments);
+    }
+    return Align(alignment: Alignment.centerLeft, child: segments);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,66 +160,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: Consumer<DashboardProvider>(
         builder: (context, provider, _) {
           if (provider.chargement) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: ThemeHelpers.accent(context)),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Chargement des données...',
-                    style: ThemeHelpers.mutedTextStyle(context),
-                  ),
-                ],
-              ),
-            );
+            return const SkeletonDashboard();
           }
 
-          return RefreshIndicator(
-            onRefresh: () => provider.chargerDonnees(),
-            color: ThemeHelpers.accent(context),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Bandeau d'accueil avec date
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.bleuFonce, AppColors.bleuFonce.withValues(alpha: 0.8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.bleuFonce.withValues(alpha: 0.2),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final padding = ResponsiveBreakpoints.pagePadding(width);
+              final chartHeight = ResponsiveBreakpoints.chartHeight(width);
+              final chargementDonnees =
+                  provider.chargementPeriode || provider.chargementGraphique;
+
+              return RefreshIndicator(
+                onRefresh: () => provider.chargerDonnees(),
+                color: ThemeHelpers.accent(context),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(padding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(width < 400 ? 16 : 20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.bleuFonce,
+                              AppColors.bleuFonce.withValues(alpha: 0.8),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.bleuFonce.withValues(alpha: 0.2),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                        child: Row(
                           children: [
-                            const Icon(Icons.wb_sunny, color: Colors.amber, size: 28),
+                            const Icon(Icons.wb_sunny,
+                                color: Colors.amber, size: 28),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Bonjour 👋',
-                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    'Tableau de bord',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -150,227 +232,237 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.refresh, color: Colors.white),
+                              icon: const Icon(Icons.refresh,
+                                  color: Colors.white),
                               onPressed: () => provider.chargerDonnees(),
                               tooltip: 'Actualiser',
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Message d'erreur si nécessaire
-                  if (provider.erreur != null)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: AppColors.rouge.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.rouge.withValues(alpha: 0.3)),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline, color: AppColors.rouge, size: 24),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              provider.erreur!,
-                              style: const TextStyle(color: AppColors.rouge, fontSize: 14),
+                      const SizedBox(height: 20),
+
+                      if (provider.erreur != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: AppColors.rouge.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.rouge.withValues(alpha: 0.3),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-
-                  // Section Accès rapide
-                  _sectionHeader(context, 'Accès rapide', Icons.rocket_launch),
-                  ResponsiveGrid(
-                    columnsForWidth: ResponsiveBreakpoints.quickAccessColumns,
-                    aspectRatioForWidth:
-                        ResponsiveBreakpoints.quickAccessAspectRatio,
-                    children: [
-                      QuickAccessButton(
-                        label: "Vente (POS)",
-                        icone: Icons.point_of_sale,
-                        couleur: AppColors.bleuFonce,
-                        onTap: () => Navigator.pushNamed(context, '/pos'),
-                      ),
-                      QuickAccessButton(
-                        label: "Produits",
-                        icone: Icons.local_bar,
-                        couleur: AppColors.orange,
-                        onTap: () => Navigator.pushNamed(context, '/produits'),
-                      ),
-                      QuickAccessButton(
-                        label: "Stocks",
-                        icone: Icons.inventory_2,
-                        couleur: AppColors.jaune,
-                        onTap: () => Navigator.pushNamed(context, '/stocks'),
-                      ),
-                      QuickAccessButton(
-                        label: "Achats",
-                        icone: Icons.shopping_cart,
-                        couleur: AppColors.vert,
-                        onTap: () => Navigator.pushNamed(context, '/achats'),
-                      ),
-                      QuickAccessButton(
-                        label: "Clients",
-                        icone: Icons.people,
-                        couleur: AppColors.bleuFonce,
-                        onTap: () => Navigator.pushNamed(context, '/clients'),
-                      ),
-                      QuickAccessButton(
-                        label: "Rapports",
-                        icone: Icons.bar_chart,
-                        couleur: AppColors.orange,
-                        onTap: () => Navigator.pushNamed(context, '/rapports'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Section Aujourd'hui
-                  _sectionHeader(
-                    context,
-                    "Aujourd'hui",
-                    Icons.today,
-                    sousTitre: 'Performance en temps réel',
-                  ),
-                  ResponsiveGrid(
-                    columnsForWidth: ResponsiveBreakpoints.kpiColumns,
-                    aspectRatioForWidth: ResponsiveBreakpoints.kpiAspectRatio,
-                    children: [
-                      StatCard(
-                        titre: "Chiffre d'affaires",
-                        valeur: Formatters.montant(provider.chiffreAffairesJour),
-                        icone: Icons.payments,
-                        couleur: AppColors.vert,
-                      ),
-                      StatCard(
-                        titre: "Ventes du jour",
-                        valeur: provider.nombreVentes.toString(),
-                        icone: Icons.point_of_sale,
-                        couleur: AppColors.bleuFonce,
-                      ),
-                      StatCard(
-                        titre: "Stocks en alerte",
-                        valeur: provider.stocksFaibles.length.toString(),
-                        icone: Icons.warning_amber,
-                        couleur: provider.stocksFaibles.isNotEmpty
-                            ? AppColors.rouge
-                            : AppColors.vert,
-                      ),
-                      StatCard(
-                        titre: "Dépenses du jour",
-                        valeur: Formatters.montant(provider.depensesJour),
-                        icone: Icons.trending_down,
-                        couleur: AppColors.orange,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Section Ce mois-ci
-                  _sectionHeader(
-                    context,
-                    "Ce mois-ci",
-                    Icons.calendar_month,
-                    sousTitre: 'Vue d\'ensemble mensuelle',
-                  ),
-                  ResponsiveGrid(
-                    columnsForWidth: ResponsiveBreakpoints.kpiColumns,
-                    aspectRatioForWidth: ResponsiveBreakpoints.kpiAspectRatio,
-                    children: [
-                      StatCard(
-                        titre: "CA du mois",
-                        valeur: Formatters.montant(provider.chiffreAffairesMois),
-                        icone: Icons.calendar_month,
-                        couleur: AppColors.vert,
-                      ),
-                      StatCard(
-                        titre: "Ventes du mois",
-                        valeur: provider.nombreVentesMois.toString(),
-                        icone: Icons.receipt_long,
-                        couleur: AppColors.bleuFonce,
-                      ),
-                      StatCard(
-                        titre: "Dépenses du mois",
-                        valeur: Formatters.montant(provider.depensesMois),
-                        icone: Icons.money_off,
-                        couleur: AppColors.orange,
-                      ),
-                      StatCard(
-                        titre: "Panier moyen",
-                        valeur: Formatters.montant(provider.panierMoyen),
-                        icone: Icons.shopping_basket,
-                        couleur: AppColors.jaune,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Section Graphique
-                  _sectionHeader(
-                    context,
-                    'Évolution des ventes',
-                    Icons.trending_up,
-                    sousTitre: '7 derniers jours',
-                  ),
-                  SalesChart(
-                    ventesParJour: provider.ventesParJour,
-                    labels: provider.labelsGraphique,
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Alertes stock
-                  _sectionHeader(
-                    context,
-                    'Alertes stock',
-                    Icons.inventory_2_outlined,
-                    sousTitre: 'Produits sous le seuil minimum',
-                  ),
-                  if (provider.stocksFaibles.isEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: ThemeHelpers.cardDecoration(context, radius: 16),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.check_circle_outline, color: AppColors.vert),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Aucune alerte stock — niveaux OK',
-                              style: ThemeHelpers.mutedTextStyle(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    Container(
-                      decoration: ThemeHelpers.cardDecoration(context, radius: 16),
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < provider.stocksFaibles.length; i++) ...[
-                            StockAlertTile(alerte: provider.stocksFaibles[i]),
-                            if (i < provider.stocksFaibles.length - 1)
-                              Divider(
-                                height: 1,
-                                color: ThemeHelpers.border(context).withValues(alpha: 0.5),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline,
+                                  color: AppColors.rouge, size: 24),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  provider.erreur!,
+                                  style: const TextStyle(
+                                    color: AppColors.rouge,
+                                    fontSize: 14,
+                                  ),
+                                ),
                               ),
-                          ],
+                            ],
+                          ),
+                        ),
+
+                      _sectionHeader(context, 'Accès rapide', Icons.rocket_launch),
+                      ResponsiveGrid(
+                        columnsForWidth:
+                            ResponsiveBreakpoints.quickAccessColumns,
+                        aspectRatioForWidth:
+                            ResponsiveBreakpoints.quickAccessAspectRatio,
+                        children: [
+                          QuickAccessButton(
+                            label: 'POS',
+                            icone: Icons.point_of_sale,
+                            couleur: AppColors.bleuFonce,
+                            onTap: () => Navigator.pushNamed(context, '/pos'),
+                          ),
+                          QuickAccessButton(
+                            label: 'Commandes',
+                            icone: Icons.receipt_long,
+                            couleur: AppColors.orange,
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              '/commandes-attente',
+                            ),
+                          ),
+                          QuickAccessButton(
+                            label: 'Stocks',
+                            icone: Icons.inventory_2,
+                            couleur: AppColors.jaune,
+                            onTap: () =>
+                                Navigator.pushNamed(context, '/stocks'),
+                          ),
+                          QuickAccessButton(
+                            label: 'Rapports',
+                            icone: Icons.bar_chart,
+                            couleur: AppColors.vert,
+                            onTap: () =>
+                                Navigator.pushNamed(context, '/rapports'),
+                          ),
                         ],
                       ),
-                    ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
+                      const SizedBox(height: 24),
+
+                      _sectionHeader(
+                        context,
+                        'Indicateurs',
+                        Icons.insights,
+                        sousTitre: provider.libellePeriode,
+                      ),
+                      _selecteurPeriode(provider, width),
+                      const SizedBox(height: 14),
+                      if (chargementDonnees)
+                        ResponsiveGrid(
+                          columnsForWidth: ResponsiveBreakpoints.kpiColumns,
+                          aspectRatioForWidth:
+                              ResponsiveBreakpoints.kpiAspectRatio,
+                          children: const [
+                            SkeletonBox(borderRadius: 12),
+                            SkeletonBox(borderRadius: 12),
+                            SkeletonBox(borderRadius: 12),
+                            SkeletonBox(borderRadius: 12),
+                          ],
+                        )
+                      else
+                        ResponsiveGrid(
+                          columnsForWidth: ResponsiveBreakpoints.kpiColumns,
+                          aspectRatioForWidth:
+                              ResponsiveBreakpoints.kpiAspectRatio,
+                          children: [
+                            StatCard(
+                              titre: provider.libelleCa,
+                              valeur: Formatters.montant(
+                                provider.chiffreAffairesPeriode,
+                              ),
+                              icone: Icons.payments,
+                              couleur: AppColors.vert,
+                            ),
+                            StatCard(
+                              titre: provider.libelleVentes,
+                              valeur:
+                                  provider.nombreVentesPeriode.toString(),
+                              icone: Icons.point_of_sale,
+                              couleur: AppColors.bleuFonce,
+                            ),
+                            StatCard(
+                              titre: 'Panier moyen',
+                              valeur: Formatters.montant(
+                                provider.panierMoyenPeriode,
+                              ),
+                              icone: Icons.shopping_basket,
+                              couleur: AppColors.jaune,
+                            ),
+                            StatCard(
+                              titre: provider.libelleDepenses,
+                              valeur: Formatters.montant(
+                                provider.depensesPeriode,
+                              ),
+                              icone: Icons.trending_down,
+                              couleur: AppColors.orange,
+                            ),
+                          ],
+                        ),
+                      const SizedBox(height: 24),
+
+                      _sectionHeader(
+                        context,
+                        'Évolution des ventes',
+                        Icons.trending_up,
+                        sousTitre: provider.libellePeriode,
+                      ),
+                      if (provider.periodeActive != 'jour') ...[
+                        _controlesGraphique(provider, width),
+                        const SizedBox(height: 12),
+                      ],
+                      if (provider.chargementGraphique ||
+                          provider.chargementPeriode)
+                        SkeletonBox(height: chartHeight, borderRadius: 12)
+                      else
+                        SalesChart(
+                          points: provider.pointsGraphique,
+                          mode: provider.periodeActive == 'jour'
+                              ? ModeGraphiqueVentes.barres
+                              : provider.modeGraphique,
+                          afficherComparaison: false,
+                          hauteur: chartHeight,
+                          onJourSelectionne: (point) {
+                            showVentesPeriodeSheet(
+                              context,
+                              dateDebut: point.jour,
+                              dateFin: point.jour,
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 24),
+
+                      _sectionHeader(
+                        context,
+                        'Alertes stock',
+                        Icons.inventory_2_outlined,
+                        sousTitre: 'Produits sous le seuil minimum',
+                      ),
+                      if (provider.stocksFaibles.isEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: ThemeHelpers.cardDecoration(
+                            context,
+                            radius: 16,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check_circle_outline,
+                                  color: AppColors.vert),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Aucune alerte stock — niveaux OK',
+                                  style:
+                                      ThemeHelpers.mutedTextStyle(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Container(
+                          decoration: ThemeHelpers.cardDecoration(
+                            context,
+                            radius: 16,
+                          ),
+                          child: Column(
+                            children: [
+                              for (int i = 0;
+                                  i < provider.stocksFaibles.length;
+                                  i++) ...[
+                                StockAlertTile(
+                                  alerte: provider.stocksFaibles[i],
+                                ),
+                                if (i < provider.stocksFaibles.length - 1)
+                                  Divider(
+                                    height: 1,
+                                    color: ThemeHelpers.border(context)
+                                        .withValues(alpha: 0.5),
+                                  ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              );
+            },
           );
         },
       ),

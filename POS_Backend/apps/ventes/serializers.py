@@ -60,10 +60,18 @@ class DetailVenteInputSerializer(serializers.Serializer):
 class DetailVenteSerializer(serializers.ModelSerializer):
     # GeneratedField (DB) — déclaration explicite pour drf-spectacular
     sous_total = MontantDecimalField(read_only=True)
+    produit_nom = serializers.CharField(source="produit.nom", read_only=True)
 
     class Meta:
         model = DetailVente
-        fields = ["id_detail", "produit", "quantite", "prix_unitaire", "sous_total"]
+        fields = [
+            "id_detail",
+            "produit",
+            "produit_nom",
+            "quantite",
+            "prix_unitaire",
+            "sous_total",
+        ]
         read_only_fields = fields
 
 

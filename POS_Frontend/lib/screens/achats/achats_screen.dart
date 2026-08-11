@@ -11,6 +11,7 @@ import '../../services/achat_service.dart';
 import '../../services/fournisseur_service.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/app_skeleton.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 
 /// Écran : Achats / Approvisionnements — cahier des charges §10.6 (volet approvisionnement)
@@ -100,7 +101,7 @@ class _AchatsScreenState extends State<AchatsScreen> {
             )
           : null,
       body: Builder(builder: (context) {
-        if (_chargement) return const Center(child: CircularProgressIndicator());
+        if (_chargement) return const SkeletonCardList(padding: EdgeInsets.fromLTRB(16, 16, 16, 96));
         if (_erreur != null) {
           return Center(child: Text(_erreur!,
               style: const TextStyle(color: AppColors.rouge)));

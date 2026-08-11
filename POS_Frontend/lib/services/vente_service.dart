@@ -30,8 +30,28 @@ class VenteService {
   final ApiService _api = ApiService();
   final PaiementService _paiementService = PaiementService();
 
-  Future<List<Vente>> getAll({String? statut}) async {
-    final query = statut == null ? '' : '?statut=$statut';
+  Future<List<Vente>> getAll({
+    String? statut,
+    DateTime? dateDebut,
+    DateTime? dateFin,
+  }) async {
+    final params = <String, String>{};
+    if (statut != null) params['statut'] = statut;
+    if (dateDebut != null) {
+      params['date_debut'] =
+          '${dateDebut.year.toString().padLeft(4, '0')}-'
+          '${dateDebut.month.toString().padLeft(2, '0')}-'
+          '${dateDebut.day.toString().padLeft(2, '0')}';
+    }
+    if (dateFin != null) {
+      params['date_fin'] =
+          '${dateFin.year.toString().padLeft(4, '0')}-'
+          '${dateFin.month.toString().padLeft(2, '0')}-'
+          '${dateFin.day.toString().padLeft(2, '0')}';
+    }
+    final query = params.isEmpty
+        ? ''
+        : '?${params.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&')}';
     final data = await _api.get('${ApiConstants.ventes}$query');
     return (data as List)
         .map((json) => Vente.fromJson(json as Map<String, dynamic>))

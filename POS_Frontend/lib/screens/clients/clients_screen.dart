@@ -11,6 +11,7 @@ import '../../services/client_service.dart';
 import '../../services/vente_service.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/app_skeleton.dart';
 import '../../widgets/common/filter_choice_chip.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 
@@ -324,7 +325,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
           Expanded(
             child: Builder(builder: (context) {
               if (_chargement) {
-                return const Center(child: CircularProgressIndicator());
+                return const SkeletonList();
               }
               if (_erreur != null) {
                 return Center(
@@ -509,7 +510,17 @@ class _DialogHistoriqueState extends State<_DialogHistorique> {
       content: SizedBox(
         width: double.maxFinite,
         child: _chargement
-            ? const Center(child: CircularProgressIndicator())
+            ? const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SkeletonListTile(dense: true),
+                            SkeletonListTile(dense: true),
+                            SkeletonListTile(dense: true),
+                          ],
+                        ),
+                      )
             : _erreur != null
                 ? Center(child: Text(_erreur!, style: const TextStyle(color: AppColors.rouge)))
                 : _ventes.isEmpty

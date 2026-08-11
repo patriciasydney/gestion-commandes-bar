@@ -67,11 +67,14 @@ void main() {
     test('beneficeNet inclut achats et depenses', () {
       final rapport = RapportComplet(
         libellePeriode: 'Test',
+        dateDebut: DateTime(2026, 1, 1),
+        dateFin: DateTime(2026, 1, 31),
         chiffreAffaires: 200000,
         nombreVentes: 10,
         depensesTotal: 30000,
         achatsTotal: 50000,
         nombreAchats: 2,
+        detailParJour: const [],
         topProduits: const [],
         depensesParCategorie: const [],
         achatsParFournisseur: const [],

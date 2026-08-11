@@ -19,15 +19,26 @@ class DetailAchatInputSerializer(serializers.Serializer):
 
 class DetailAchatSerializer(serializers.ModelSerializer):
     sous_total = MontantDecimalField(read_only=True)
+    produit_nom = serializers.CharField(source="produit.nom", read_only=True)
 
     class Meta:
         model = DetailAchat
-        fields = ["id_detail", "produit", "quantite", "prix_unitaire", "sous_total"]
+        fields = [
+            "id_detail",
+            "produit",
+            "produit_nom",
+            "quantite",
+            "prix_unitaire",
+            "sous_total",
+        ]
         read_only_fields = fields
 
 
 class AchatSerializer(serializers.ModelSerializer):
     details = DetailAchatSerializer(many=True, read_only=True)
+    fournisseur_nom = serializers.CharField(
+        source="fournisseur.raison_sociale", read_only=True
+    )
 
     class Meta:
         model = Achat
@@ -37,10 +48,17 @@ class AchatSerializer(serializers.ModelSerializer):
             "montant_total",
             "statut",
             "fournisseur",
+            "fournisseur_nom",
             "utilisateur",
             "details",
         ]
-        read_only_fields = ["id_achat", "date_achat", "montant_total", "statut"]
+        read_only_fields = [
+            "id_achat",
+            "date_achat",
+            "montant_total",
+            "statut",
+            "fournisseur_nom",
+        ]
 
 
 class AchatCreateSerializer(serializers.ModelSerializer):

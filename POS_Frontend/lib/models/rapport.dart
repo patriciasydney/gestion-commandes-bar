@@ -162,22 +162,28 @@ class RapportAchats {
 /// Vue agrégée pour l'écran Rapports (4 endpoints backend).
 class RapportComplet {
   final String libellePeriode;
+  final DateTime dateDebut;
+  final DateTime dateFin;
   final double chiffreAffaires;
   final int nombreVentes;
   final double depensesTotal;
   final double achatsTotal;
   final int nombreAchats;
+  final List<RapportVenteJour> detailParJour;
   final List<TopProduitVendu> topProduits;
   final List<DepenseParCategorie> depensesParCategorie;
   final List<AchatParFournisseur> achatsParFournisseur;
 
   RapportComplet({
     required this.libellePeriode,
+    required this.dateDebut,
+    required this.dateFin,
     required this.chiffreAffaires,
     required this.nombreVentes,
     required this.depensesTotal,
     required this.achatsTotal,
     required this.nombreAchats,
+    required this.detailParJour,
     required this.topProduits,
     required this.depensesParCategorie,
     required this.achatsParFournisseur,

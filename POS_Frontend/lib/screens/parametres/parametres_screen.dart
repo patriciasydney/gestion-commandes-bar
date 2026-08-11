@@ -8,6 +8,7 @@ import '../../providers/theme_provider.dart';
 import '../../services/parametre_service.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/app_skeleton.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 
 /// Écran : Paramètres — cahier des charges §10.9
@@ -316,7 +317,7 @@ class _ParametresScreenState extends State<ParametresScreen> {
       drawer: const AppDrawer(),
       bottomNavigationBar: const AppBottomNav(currentRoute: '/parametres'),
       body: _chargement
-          ? const Center(child: CircularProgressIndicator())
+          ? const SkeletonDashboard()
           : _erreur != null
               ? Center(
                   child: Padding(

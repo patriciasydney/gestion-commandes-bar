@@ -13,6 +13,7 @@ import '../../routes/app_routes.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/app_skeleton.dart';
 import '../../widgets/common/filter_choice_chip.dart';
 
 /// Écran : Gestion des produits — cahier des charges §10.5
@@ -141,7 +142,7 @@ class _ProduitsScreenState extends State<ProduitsScreen> {
           Expanded(
             child: Builder(builder: (context) {
               if (produitProvider.chargement) {
-                return const Center(child: CircularProgressIndicator());
+                return const SkeletonList();
               }
               if (produitProvider.erreur != null) {
                 return Center(child: Text(produitProvider.erreur!, style: const TextStyle(color: AppColors.rouge)));

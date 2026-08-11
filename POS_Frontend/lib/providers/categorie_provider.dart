@@ -2,14 +2,30 @@ import 'package:flutter/foundation.dart';
 import '../models/categorie.dart';
 import '../services/categorie_service.dart';
 
-/// Liste des catégories — partagée entre le filtre du catalogue produits,
-/// le formulaire produit, et l'écran de gestion des catégories.
+/// Liste des catégories — partagée entre filtre catalogue, formulaire produit,
+/// POS et écran de gestion.
 class CategorieProvider extends ChangeNotifier {
   final CategorieService _service = CategorieService();
 
   List<Categorie> categories = [];
   bool chargement = false;
   String? erreur;
+  String recherche = '';
+
+  List<Categorie> get categoriesFiltrees {
+    final q = recherche.trim().toLowerCase();
+    if (q.isEmpty) return List.unmodifiable(categories);
+    return categories
+        .where(
+          (c) =>
+              c.nom.toLowerCase().contains(q) ||
+              (c.description?.toLowerCase().contains(q) ?? false),
+        )
+        .toList();
+  }
+
+  List<Categorie> get categoriesActives =>
+      categories.where((c) => c.actif).toList();
 
   Future<void> chargerCategories() async {
     chargement = true;
@@ -19,16 +35,22 @@ class CategorieProvider extends ChangeNotifier {
     try {
       categories = await _service.getAll();
     } catch (e) {
-      erreur = "Impossible de charger les catégories (backend non branché ?)";
+      erreur = 'Impossible de charger les catégories';
     }
 
     chargement = false;
     notifyListeners();
   }
 
+  void rechercher(String texte) {
+    recherche = texte;
+    notifyListeners();
+  }
+
   Future<void> creer(Categorie categorie) async {
     final cree = await _service.create(categorie);
     categories.add(cree);
+    categories.sort((a, b) => a.nom.compareTo(b.nom));
     notifyListeners();
   }
 
@@ -36,7 +58,10 @@ class CategorieProvider extends ChangeNotifier {
     final maj = await _service.update(id, categorie);
     final index = categories.indexWhere((c) => c.idCategorie == id);
     if (index != -1) {
-      categories[index] = maj;
+      categories[index] = maj.copyWith(
+        nombreProduits: categories[index].nombreProduits,
+      );
+      categories.sort((a, b) => a.nom.compareTo(b.nom));
       notifyListeners();
     }
   }

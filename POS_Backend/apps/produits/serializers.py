@@ -28,6 +28,21 @@ class ProduitSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id_produit", "date_creation"]
 
+    def validate_image(self, value):
+        """Le champ stocke un chemin/URL court, pas une image encodée."""
+        if value in (None, ""):
+            return None
+        if len(value) > 255:
+            raise serializers.ValidationError(
+                "L'image doit être un chemin ou une URL (255 caractères max), "
+                "pas une photo encodée en base64."
+            )
+        return value
+
+    def validate_code_barres(self, value):
+        if value in (None, ""):
+            return None
+        return value
 
 class ProduitCreateSerializer(ProduitSerializer):
     """Crée le produit et la fiche stock associée (relation 1-1)."""

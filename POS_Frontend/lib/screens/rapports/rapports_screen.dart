@@ -9,7 +9,11 @@ import '../../services/rapport_service.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/common/app_drawer.dart';
 import '../../widgets/common/app_header.dart';
+import '../../widgets/common/app_skeleton.dart';
 import '../../widgets/common/filter_choice_chip.dart';
+import '../../widgets/rapports/rapport_charts.dart';
+import '../../widgets/rapports/finance_periode_sheets.dart';
+import '../../widgets/ventes/ventes_periode_sheet.dart';
 
 /// Écran : Rapports et statistiques — aligné sur `/reports/*` (DRF).
 class RapportsScreen extends StatefulWidget {
@@ -148,7 +152,7 @@ class _RapportsScreenState extends State<RapportsScreen> {
           Expanded(
             child: Builder(builder: (context) {
               if (_chargement) {
-                return const Center(child: CircularProgressIndicator());
+                return const SkeletonDashboard();
               }
               if (_erreur != null) {
                 return Center(
@@ -194,67 +198,95 @@ class _RapportsScreenState extends State<RapportsScreen> {
                             couleur: AppColors.vert,
                           ),
                           _CarteStat(
-                            titre: 'Nombre de ventes',
-                            valeur: rapport.nombreVentes.toString(),
-                            icone: Icons.receipt_long,
-                            couleur: AppColors.bleuFonce,
+                            titre: 'Bénéfice net',
+                            valeur: Formatters.montant(rapport.beneficeNet),
+                            icone: Icons.savings,
+                            couleur: rapport.beneficeNet >= 0
+                                ? AppColors.vert
+                                : AppColors.rouge,
                           ),
                           _CarteStat(
-                            titre: 'Dépenses opérationnelles',
-                            valeur: Formatters.montant(rapport.depensesTotal),
-                            icone: Icons.receipt_outlined,
-                            couleur: AppColors.rouge,
-                          ),
-                          _CarteStat(
-                            titre: 'Achats fournisseurs',
-                            valeur: Formatters.montant(rapport.achatsTotal),
-                            icone: Icons.local_shipping_outlined,
-                            couleur: AppColors.orange,
+                            titre: 'Panier moyen',
+                            valeur: Formatters.montant(rapport.panierMoyen),
+                            icone: Icons.shopping_basket,
+                            couleur: AppColors.jaune,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final wide = constraints.maxWidth >= ResponsiveBreakpoints.phone;
-                          final cartes = [
-                            _CarteStatLarge(
-                              titre: 'Bénéfice net (CA − dépenses − achats)',
-                              valeur: Formatters.montant(rapport.beneficeNet),
-                              icone: Icons.savings,
-                              couleur: rapport.beneficeNet >= 0
-                                  ? AppColors.vert
-                                  : AppColors.rouge,
-                            ),
-                            _CarteStatLarge(
-                              titre: 'Panier moyen',
-                              valeur: Formatters.montant(rapport.panierMoyen),
-                              icone: Icons.shopping_basket,
-                              couleur: AppColors.jaune,
-                            ),
-                          ];
-                          if (!wide) {
-                            return Column(
-                              children: [
-                                cartes[0],
-                                const SizedBox(height: 12),
-                                cartes[1],
-                              ],
-                            );
+                      const SizedBox(height: 24),
+                      RapportFinanceBarChart(
+                        rapport: rapport,
+                        onIndicateurSelectionne: (indicateur) {
+                          switch (indicateur) {
+                            case 'ca':
+                              showVentesPeriodeSheet(
+                                context,
+                                dateDebut: rapport.dateDebut,
+                                dateFin: rapport.dateFin,
+                                titre: 'Ventes — ${rapport.libellePeriode}',
+                              );
+                            case 'achats':
+                              showAchatsPeriodeSheet(
+                                context,
+                                dateDebut: rapport.dateDebut,
+                                dateFin: rapport.dateFin,
+                                titre: 'Achats — ${rapport.libellePeriode}',
+                              );
+                            case 'depenses':
+                              showDepensesPeriodeSheet(
+                                context,
+                                dateDebut: rapport.dateDebut,
+                                dateFin: rapport.dateFin,
+                                titre: 'Dépenses — ${rapport.libellePeriode}',
+                              );
+                            case 'benefice':
+                              showBeneficePeriodeSheet(
+                                context,
+                                rapport: rapport,
+                              );
                           }
-                          return Row(
-                            children: [
-                              Expanded(child: cartes[0]),
-                              const SizedBox(width: 12),
-                              Expanded(child: cartes[1]),
-                            ],
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      RapportCaChart(
+                        rapport: rapport,
+                        onPeriodeSelectionnee: (debut, fin, titre) {
+                          showVentesPeriodeSheet(
+                            context,
+                            dateDebut: debut,
+                            dateFin: fin,
+                            titre: titre,
                           );
                         },
                       ),
-                      const SizedBox(height: 24),
-                      _TitreSection('Top produits vendus'),
-                      const SizedBox(height: 8),
-                      _ListeTopProduits(rapport.topProduits),
+                      const SizedBox(height: 16),
+                      RapportTopProduitsBarChart(
+                        produits: rapport.topProduits,
+                        onProduitSelectionne: (produit) {
+                          showVentesPeriodeSheet(
+                            context,
+                            dateDebut: rapport.dateDebut,
+                            dateFin: rapport.dateFin,
+                            titre:
+                                'Ventes — ${produit.nom} (${rapport.libellePeriode})',
+                            filtreProduitNom: produit.nom,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      RapportDepensesDonut(
+                        depenses: rapport.depensesParCategorie,
+                        onCategorieSelectionnee: (cat) {
+                          showDepensesPeriodeSheet(
+                            context,
+                            dateDebut: rapport.dateDebut,
+                            dateFin: rapport.dateFin,
+                            titre:
+                                'Dépenses — ${cat.categorie} (${rapport.libellePeriode})',
+                            filtreCategorie: cat.categorie,
+                          );
+                        },
+                      ),
                       const SizedBox(height: 24),
                       _TitreSection('Achats fournisseurs'),
                       if (rapport.nombreAchats > 0)
@@ -267,10 +299,6 @@ class _RapportsScreenState extends State<RapportsScreen> {
                         ),
                       const SizedBox(height: 4),
                       _ListeAchatsFournisseur(rapport.achatsParFournisseur),
-                      const SizedBox(height: 24),
-                      _TitreSection('Dépenses opérationnelles'),
-                      const SizedBox(height: 8),
-                      _ListeDepensesCategorie(rapport.depensesParCategorie),
                       const SizedBox(height: 16),
                     ],
                   ),
@@ -332,213 +360,6 @@ class _CarteStat extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _CarteStatLarge extends StatelessWidget {
-  final String titre;
-  final String valeur;
-  final IconData icone;
-  final Color couleur;
-
-  const _CarteStatLarge({
-    required this.titre,
-    required this.valeur,
-    required this.icone,
-    required this.couleur,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: couleur.withValues(alpha: 0.15),
-              child: Icon(icone, color: couleur),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(titre, style: ThemeHelpers.mutedTextStyle(context, fontSize: 12)),
-                  Text(
-                    valeur,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ListeTopProduits extends StatelessWidget {
-  final List<TopProduitVendu> produits;
-  const _ListeTopProduits(this.produits);
-
-  @override
-  Widget build(BuildContext context) {
-    if (produits.isEmpty) {
-      return Text(
-        'Aucune vente sur la période.',
-        style: ThemeHelpers.mutedTextStyle(context),
-      );
-    }
-    final maxQte = produits.first.quantiteTotale.toDouble();
-
-    return Container(
-      decoration: ThemeHelpers.cardDecoration(context),
-      child: Column(
-        children: [
-          for (int i = 0; i < produits.length; i++) ...[
-            _LigneTopProduit(
-              rang: i + 1,
-              nom: produits[i].nom,
-              quantite: produits[i].quantiteTotale,
-              ca: produits[i].chiffreAffaires,
-              ratio: produits[i].quantiteTotale / maxQte,
-            ),
-            if (i < produits.length - 1) const Divider(height: 1),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _LigneTopProduit extends StatelessWidget {
-  final int rang;
-  final String nom;
-  final int quantite;
-  final double ca;
-  final double ratio;
-
-  const _LigneTopProduit({
-    required this.rang,
-    required this.nom,
-    required this.quantite,
-    required this.ca,
-    required this.ratio,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24,
-            child: Text(
-              '#$rang',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: ThemeHelpers.accent(context),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(nom, style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: ratio.clamp(0.0, 1.0),
-                    minHeight: 5,
-                    backgroundColor: ThemeHelpers.progressTrack(context),
-                    color: AppColors.orange,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('$quantite u.', style: const TextStyle(fontWeight: FontWeight.w600)),
-              Text(
-                Formatters.montant(ca),
-                style: ThemeHelpers.mutedTextStyle(context, fontSize: 11),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ListeDepensesCategorie extends StatelessWidget {
-  final List<DepenseParCategorie> categories;
-  const _ListeDepensesCategorie(this.categories);
-
-  @override
-  Widget build(BuildContext context) {
-    if (categories.isEmpty) {
-      return Text(
-        'Aucune dépense opérationnelle sur la période.',
-        style: ThemeHelpers.mutedTextStyle(context),
-      );
-    }
-    final maxMontant = categories.map((c) => c.total).reduce((a, b) => a > b ? a : b);
-
-    return Container(
-      decoration: ThemeHelpers.cardDecoration(context),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        children: [
-          for (final c in categories)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      c.categorie,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: (c.total / maxMontant).clamp(0.0, 1.0),
-                        minHeight: 6,
-                        backgroundColor: ThemeHelpers.progressTrack(context),
-                        color: AppColors.rouge,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    width: 100,
-                    child: Text(
-                      Formatters.montant(c.total),
-                      textAlign: TextAlign.right,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
       ),
     );
   }

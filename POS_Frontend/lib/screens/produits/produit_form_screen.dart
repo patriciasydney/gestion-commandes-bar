@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -41,7 +40,10 @@ class _ProduitFormScreenState extends State<ProduitFormScreen> {
   int? _fournisseur;
   bool _actif = true;
 
-  String? _image;
+  /// Chemin/URL renvoyé par l'API (`CharField` max 255) — jamais du base64.
+  String? _imageApi;
+  /// Aperçu local uniquement (galerie) ; non envoyé au backend.
+  Uint8List? _imagePreview;
   List<Fournisseur> _fournisseurs = [];
   bool _chargementFournisseurs = true;
 
@@ -64,7 +66,11 @@ class _ProduitFormScreenState extends State<ProduitFormScreen> {
         _categorie = arg.categorie;
         _fournisseur = arg.fournisseur;
         _actif = arg.actif;
-        _image = arg.image;
+        // Ne garder que les chemins courts ; le base64 dépasse max_length=255 côté API.
+        final img = arg.image;
+        if (img != null && img.isNotEmpty && img.length <= 255 && !_sembleBase64(img)) {
+          _imageApi = img;
+        }
       }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         context.read<CategorieProvider>().chargerCategories();
@@ -82,13 +88,30 @@ class _ProduitFormScreenState extends State<ProduitFormScreen> {
     }
   }
 
+  static bool _sembleBase64(String value) {
+    if (value.startsWith('data:') || value.length > 255) return true;
+    // Heuristique : pas de slash/chemin, alphabet base64 dominant.
+    return !value.contains('/') && !value.contains('.') && RegExp(r'^[A-Za-z0-9+/=]+$').hasMatch(value);
+  }
+
   Future<void> _choisirImage() async {
     final picker = ImagePicker();
     final fichier = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (fichier == null) return;
 
     final Uint8List octets = await fichier.readAsBytes();
-    setState(() => _image = base64Encode(octets));
+    setState(() => _imagePreview = octets);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Aperçu local uniquement : l’API n’accepte pas encore les photos '
+          '(champ image limité à 255 caractères). Les autres champs seront bien enregistrés.',
+        ),
+        backgroundColor: AppColors.orange,
+        duration: Duration(seconds: 5),
+      ),
+    );
   }
 
   Future<void> _enregistrer() async {
@@ -115,7 +138,8 @@ class _ProduitFormScreenState extends State<ProduitFormScreen> {
       actif: _actif,
       categorie: _categorie!,
       fournisseur: _fournisseur,
-      image: _image,
+      // Jamais de base64 ici : sinon PUT → 400 (max 255).
+      image: _imageApi,
     );
 
     try {
@@ -176,13 +200,20 @@ class _ProduitFormScreenState extends State<ProduitFormScreen> {
                         border: Border.all(color: ThemeHelpers.border(context)),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: _image != null
-                          ? Image.memory(base64Decode(_image!), fit: BoxFit.cover)
-                          : Icon(
-                              Icons.add_a_photo_outlined,
-                              size: 32,
-                              color: ThemeHelpers.mutedText(context),
-                            ),
+                      child: _imagePreview != null
+                          ? Image.memory(_imagePreview!, fit: BoxFit.cover)
+                          : (_imageApi != null && _imageApi!.startsWith('http')
+                              ? Image.network(_imageApi!, fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 32,
+                                    color: ThemeHelpers.mutedText(context),
+                                  ))
+                              : Icon(
+                                  Icons.add_a_photo_outlined,
+                                  size: 32,
+                                  color: ThemeHelpers.mutedText(context),
+                                )),
                     ),
                     Positioned(
                       right: 0,
@@ -275,7 +306,10 @@ class _ProduitFormScreenState extends State<ProduitFormScreen> {
               initialValue: _categorie,
               decoration: const InputDecoration(labelText: 'Catégorie'),
               items: [
-                for (final c in categories) DropdownMenuItem(value: c.idCategorie, child: Text(c.nom)),
+                for (final c in categories.where(
+                  (c) => c.actif || c.idCategorie == _categorie,
+                ))
+                  DropdownMenuItem(value: c.idCategorie, child: Text(c.nom)),
               ],
               onChanged: (v) => setState(() => _categorie = v),
             ),
