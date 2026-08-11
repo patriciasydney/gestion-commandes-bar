@@ -12,7 +12,10 @@
 INSERT INTO roles (nom_role, description, actif) VALUES
 ('Administrateur', 'Accès complet à la configuration et à la supervision du système', TRUE),
 ('Gérant',         'Supervision commerciale, produits, fournisseurs et stocks',          TRUE),
-('Caissier',       'Enregistrement des ventes, paiements et gestion de caisse',          TRUE);
+('Caissier',       'Enregistrement des ventes, paiements et gestion de caisse',          TRUE),
+('Magasinier',     'Gestion des approvisionnements, mouvements de stock et inventaires', TRUE),
+('Serveur',        'Prise de commandes clients et transmission au caissier',             TRUE),
+('Comptable',      'Consultation des rapports financiers, dépenses et achats',           TRUE);
 
 -- ============================================================================
 -- 2. CATÉGORIES DE PRODUITS
@@ -41,18 +44,33 @@ INSERT INTO clients (nom, prenom, telephone, email, adresse, actif) VALUES
 ('Ateba',   'Chantal','+237677222222', 'chantal.ateba@mail.com','Mvog-Mbi, Yaoundé',   TRUE);
 
 -- ============================================================================
--- 5. UTILISATEURS (mots de passe simulés = hash factice, à remplacer par bcrypt/argon2)
+-- 5. UTILISATEURS
+-- Mots de passe = vrais hashs Django (PBKDF2-SHA256, PASSWORD_HASHERS par défaut).
+-- Comptes prêts à l'emploi dès l'import, aucune commande supplémentaire requise :
+--   admin / admin123, gerant1 / gerant123, caissier1 / caissier123,
+--   magasinier1 / magasin123, serveur1 / serveur123, comptable1 / comptable123
+-- (générés via django.contrib.auth.hashers.make_password ; si le hasher par
+-- défaut du projet change dans settings.py, régénérer ces valeurs.)
 -- ============================================================================
 INSERT INTO utilisateurs (nom, prenom, telephone, email, nom_utilisateur, mot_de_passe, statut, id_role) VALUES
 ('Fotso',  'Michel',  '+237690111111', 'michel.fotso@possarl.cm',  'admin',
-    '$2b$12$FAKEHASHADMIN0000000000000000000000000000000000000', 'actif',
+    'pbkdf2_sha256$1200000$uYtW560HVQNyYxHwa6qrqH$Xf5avZGJCumX9unCQtwywxqdgXKNF3JdxqKzfYz8yj8=', 'actif',
     (SELECT id_role FROM roles WHERE nom_role = 'Administrateur')),
 ('Nguema', 'Sylvie',  '+237690222222', 'sylvie.nguema@possarl.cm', 'gerant1',
-    '$2b$12$FAKEHASHGERANT00000000000000000000000000000000000', 'actif',
+    'pbkdf2_sha256$1200000$ijnolb6cooNAGwclxmT0Xq$2GLiZj5Wy646kb8n8oUU+eJ7ZUswPJc5VXWOjS6d52g=', 'actif',
     (SELECT id_role FROM roles WHERE nom_role = 'Gérant')),
 ('Biya',   'Paul',    '+237690333333', 'paul.biya.k@possarl.cm',   'caissier1',
-    '$2b$12$FAKEHASHCAISSIER000000000000000000000000000000000', 'actif',
-    (SELECT id_role FROM roles WHERE nom_role = 'Caissier'));
+    'pbkdf2_sha256$1200000$Y4b9lFmiCmOXJGZSm13lE2$IPApgs4SAvX0dNse+xJnQ6JHm8Db2O1RYEp9bV7APEw=', 'actif',
+    (SELECT id_role FROM roles WHERE nom_role = 'Caissier')),
+('Ekanga', 'Brice',   '+237690444444', 'brice.ekanga@possarl.cm',  'magasinier1',
+    'pbkdf2_sha256$1200000$pIZ13AgpGgTunmBjf0pkuD$rs83NiR9HzRdkDX+MT3zumY8xRTOws/F2bVS7NPLOlw=', 'actif',
+    (SELECT id_role FROM roles WHERE nom_role = 'Magasinier')),
+('Manga',  'Claire',  '+237690555555', 'claire.manga@possarl.cm',  'serveur1',
+    'pbkdf2_sha256$1200000$DznA3nIIMZDYLuJ7Rji8xF$I1BPBx03RKb4GzpBwubnCl5c6WSYv4wBN2sZx067bxQ=', 'actif',
+    (SELECT id_role FROM roles WHERE nom_role = 'Serveur')),
+('Owona',  'Denise',  '+237690666666', 'denise.owona@possarl.cm',  'comptable1',
+    'pbkdf2_sha256$1200000$HhYWSH4MeyQasYbIhHKyUF$uYyclJEK5Lkc9yrQGV+JIYd3DhMpGJC94/8dIWiakiY=', 'actif',
+    (SELECT id_role FROM roles WHERE nom_role = 'Comptable'));
 
 -- ============================================================================
 -- 6. PRODUITS (15 articles réalistes)
@@ -264,9 +282,9 @@ UPDATE stocks SET quantite_disponible = quantite_disponible - 1, date_maj = now(
 -- 14. DÉPENSES DE FONCTIONNEMENT
 -- ============================================================================
 INSERT INTO depenses (libelle, categorie, montant, date_depense, id_utilisateur) VALUES
-('Facture ENEO électricité',    'electricite', 45000.00, now(), (SELECT id_utilisateur FROM utilisateurs WHERE nom_utilisateur = 'gerant1')),
-('Facture CAMWATER eau',        'eau',          15000.00, now(), (SELECT id_utilisateur FROM utilisateurs WHERE nom_utilisateur = 'gerant1')),
-('Transport approvisionnement', 'transport',    10000.00, now(), (SELECT id_utilisateur FROM utilisateurs WHERE nom_utilisateur = 'gerant1'));
+('Facture ENEO électricité',    'Charges fixes', 45000.00, now(), (SELECT id_utilisateur FROM utilisateurs WHERE nom_utilisateur = 'gerant1')),
+('Facture CAMWATER eau',        'Charges fixes', 15000.00, now(), (SELECT id_utilisateur FROM utilisateurs WHERE nom_utilisateur = 'gerant1')),
+('Transport approvisionnement', 'Carburant',     10000.00, now(), (SELECT id_utilisateur FROM utilisateurs WHERE nom_utilisateur = 'gerant1'));
 
 -- ============================================================================
 -- 15. JOURNAL D'ACTIVITÉ (traçabilité des actions clés)

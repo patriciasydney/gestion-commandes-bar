@@ -4,13 +4,13 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
+/build/
 develop-eggs/
 dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
 parts/
 sdist/
@@ -80,6 +80,13 @@ dmypy.json
 
 # --- Dossiers résiduels locaux ---
 test_dsi/
+
+# --- Flutter (POS_Frontend) — voir aussi POS_Frontend/.gitignore ---
+POS_Frontend/.dart_tool/
+POS_Frontend/.flutter-plugins
+POS_Frontend/.flutter-plugins-dependencies
+POS_Frontend/.packages
+POS_Frontend/build/
 
 # --- Anciennes apps Django à la racine (migrées dans POS_Backend/apps/) ---
 /achats/

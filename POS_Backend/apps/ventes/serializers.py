@@ -5,11 +5,8 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.journal_activite.services import enregistrer_journal
-from apps.paiements.serializers import PaiementSerializer
 from apps.produits.models import Produit
 from apps.stocks.models import MouvementStock, Stock
-from apps.utils.fields import MontantDecimalField
 
 from .models import Caisse, DetailVente, Vente
 
@@ -26,17 +23,11 @@ class CaisseSerializer(serializers.ModelSerializer):
             "statut",
             "utilisateur",
         ]
-        read_only_fields = [
-            "id_caisse",
-            "date_ouverture",
-            "date_fermeture",
-            "statut",
-            "utilisateur",
-        ]
+        read_only_fields = ["id_caisse", "date_ouverture", "date_fermeture", "statut"]
 
 
 class CaisseFermetureSerializer(serializers.Serializer):
-    montant_final = MontantDecimalField(min_value=0)
+    montant_final = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
 
     def save(self, **kwargs):
         caisse = self.context["caisse"]
@@ -52,12 +43,14 @@ class CaisseFermetureSerializer(serializers.Serializer):
 class DetailVenteInputSerializer(serializers.Serializer):
     produit = serializers.PrimaryKeyRelatedField(queryset=Produit.objects.all())
     quantite = serializers.IntegerField(min_value=1)
-    prix_unitaire = MontantDecimalField(required=False, min_value=0)
+    prix_unitaire = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False, min_value=0
+    )
 
 
 class DetailVenteSerializer(serializers.ModelSerializer):
-    # GeneratedField (DB) — déclaration explicite pour drf-spectacular
-    sous_total = MontantDecimalField(read_only=True)
+    # GeneratedField (PostgreSQL) — déclaration explicite pour drf-spectacular / Swagger
+    sous_total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = DetailVente
@@ -86,8 +79,10 @@ class VenteSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id_vente", "date_vente", "montant_total", "statut"]
 
-    @extend_schema_field(PaiementSerializer(many=True))
+    @extend_schema_field(serializers.ListField(child=serializers.DictField()))
     def get_paiements(self, obj):
+        from apps.paiements.serializers import PaiementSerializer
+
         return PaiementSerializer(obj.paiements.all(), many=True).data
 
 
@@ -96,7 +91,7 @@ class VenteCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vente
-        fields = ["reference", "remise", "client", "caisse", "details"]
+        fields = ["reference", "remise", "utilisateur", "client", "caisse", "details"]
 
     def validate(self, attrs):
         if not attrs.get("details"):
@@ -112,20 +107,10 @@ class VenteCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        request = self.context.get("request")
-        if request is None or not request.user.is_authenticated:
-            raise serializers.ValidationError(
-                {"detail": "Authentification requise pour créer une vente."}
-            )
-
         details_data = validated_data.pop("details")
         remise = validated_data.get("remise", Decimal("0"))
 
-        vente = Vente.objects.create(
-            montant_total=0,
-            utilisateur=request.user,
-            **validated_data,
-        )
+        vente = Vente.objects.create(montant_total=0, **validated_data)
 
         montant_total = Decimal("0")
         for line in details_data:
@@ -162,12 +147,6 @@ class VenteCreateSerializer(serializers.ModelSerializer):
 
         vente.montant_total = montant_total - remise
         vente.save(update_fields=["montant_total"])
-
-        enregistrer_journal(
-            request,
-            "vente.create",
-            f"Vente {vente.reference} — total {vente.montant_total}",
-        )
         return vente
 
 
@@ -197,12 +176,4 @@ class VenteAnnulationSerializer(serializers.Serializer):
 
         vente.statut = Vente.STATUT_ANNULEE
         vente.save(update_fields=["statut"])
-
-        request = self.context.get("vente_request")
-        if request:
-            enregistrer_journal(
-                request,
-                "vente.annuler",
-                f"Annulation vente {vente.reference}",
-            )
         return vente

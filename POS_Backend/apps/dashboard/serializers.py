@@ -1,7 +1,5 @@
 from rest_framework import serializers
 
-from apps.utils.fields import MontantDecimalField
-
 
 class ProduitStockFaibleSerializer(serializers.Serializer):
     produit = serializers.CharField()
@@ -11,7 +9,7 @@ class ProduitStockFaibleSerializer(serializers.Serializer):
 
 class DashboardSummarySerializer(serializers.Serializer):
     date = serializers.DateField()
-    chiffre_affaires_jour = MontantDecimalField()
+    chiffre_affaires_jour = serializers.DecimalField(max_digits=10, decimal_places=2)
     nombre_tickets_jour = serializers.IntegerField()
-    depenses_jour = MontantDecimalField()
+    depenses_jour = serializers.DecimalField(max_digits=10, decimal_places=2)
     produits_stock_faible = ProduitStockFaibleSerializer(many=True)

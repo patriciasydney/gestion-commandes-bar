@@ -24,11 +24,20 @@ cp .env.example .env
 
 ```bash
 psql -U michel -d test_dsi -f ../database/schema.sql
-psql -U michel -d test_dsi -f ../database/django_utilisateurs_bridge.sql
 psql -U michel -d test_dsi -f ../database/indexes_optimisation.sql
 psql -U michel -d test_dsi -f ../database/seed.sql
+psql -U michel -d test_dsi -f ../database/django_utilisateurs_bridge.sql
 psql -U michel -d test_dsi -f ../database/notifications.sql
 ```
+
+> ⚠️ `django_utilisateurs_bridge.sql` doit s'exécuter **après** `seed.sql` : il ajoute les
+> colonnes `is_active`/`is_staff`/… puis les met à jour (`UPDATE`) sur les lignes déjà
+> insérées. Si on l'exécute avant, la table `utilisateurs` est encore vide et ces `UPDATE`
+> ne font rien.
+>
+> Depuis la mise à jour de `seed.sql`, les comptes de démo (`admin/admin123`, `gerant1/gerant123`, …)
+> sont utilisables immédiatement après cet import : les mots de passe sont déjà de vrais hashs
+> Django (plus besoin de lancer `python manage.py ensure_dev_users`).
 
 ## Lancer le serveur
 
@@ -82,11 +91,6 @@ Voir aussi : [INTEGRATION_EQUIPE.md](./INTEGRATION_EQUIPE.md)
 | `/api/depenses/` | depenses |
 | `/api/journal-activite/` | journal_activite |
 | `/api/dashboard/summary/` | dashboard (Sindiely) |
-| `/api/reports/ventes/`, `/produits/`, `/depenses/`, `/achats/` | reports (Sindiely) |
+| `/api/reports/ventes/`, `/produits/`, `/depenses/` | reports (Sindiely) |
 | `/api/notifications/` | notifications (Sindiely) |
 | `/api/docs/`, `/api/schema/` | Swagger OpenAPI |
-
-## Intégration Flutter
-
-- [FRONTEND_INTEGRATION.md](./FRONTEND_INTEGRATION.md) — contrats API, flux POS, mapping JSON
-- [E2E_CHECKLIST.md](./E2E_CHECKLIST.md) — checklist manuelle login → vente → rapport

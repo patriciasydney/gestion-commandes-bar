@@ -74,5 +74,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         data = super().validate(attrs)
+        # Bloc attendu par le frontend Flutter (AuthProvider / isAdministrateur).
         data["utilisateur"] = UtilisateurSerializer(self.user).data
         return data

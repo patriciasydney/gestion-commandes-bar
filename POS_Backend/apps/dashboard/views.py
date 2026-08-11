@@ -14,7 +14,7 @@ from apps.ventes.models import Vente
 from .serializers import DashboardSummarySerializer
 
 
-@extend_schema(responses=DashboardSummarySerializer)
+@extend_schema(responses={200: DashboardSummarySerializer})
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsGerantOrComptable])
 def dashboard_summary(request):

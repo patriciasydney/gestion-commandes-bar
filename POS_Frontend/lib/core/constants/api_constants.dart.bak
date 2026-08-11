@@ -1,0 +1,24 @@
+/// URL de base de l'API Django REST Framework.
+/// À adapter une fois le backend déployé (ex: https://sport.services-ztf.com/api).
+class ApiConstants {
+  ApiConstants._();
+
+  static const String baseUrl = "http://localhost:8000/api";
+
+  // Endpoints — à ajuster une fois les routes Django connues.
+  static const String login = "/auth/login/";
+  static const String produits = "/produits/";
+  static const String categories = "/categories/";
+  static const String fournisseurs = "/fournisseurs/";
+  static const String clients = "/clients/";
+  static const String stocks = "/stocks/";
+  static const String mouvementsStock = "/mouvements-stock/";
+  static const String ventes = "/ventes/";
+  static const String paiements = "/paiements/";
+  static const String achats = "/achats/";
+  static const String depenses = "/depenses/";
+  static const String caisses = "/caisses/";
+  static const String utilisateurs = "/utilisateurs/";
+  static const String dashboard = "/dashboard/";
+  static const String rapports = "/rapports/";
+}

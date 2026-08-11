@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.db import transaction
 from rest_framework import serializers
 
-from apps.journal_activite.services import enregistrer_journal
 from apps.ventes.models import Vente
 
 from .models import Paiement

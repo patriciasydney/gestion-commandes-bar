@@ -1,22 +1,13 @@
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
-from apps.utilisateurs.permissions import IsAdministrateur, IsGerantOrAdmin, IsStockReader
-from apps.utils.mixins import RoleActionPermissionMixin
+from apps.utilisateurs.permissions import CanManageCatalog
 
 from .models import Categorie
 from .serializers import CategorieSerializer
 
 
-class CategorieViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
+class CategorieViewSet(viewsets.ModelViewSet):
     queryset = Categorie.objects.all().order_by("nom")
     serializer_class = CategorieSerializer
-
-    role_permissions = {
-        "list": [IsStockReader],
-        "retrieve": [IsStockReader],
-        "create": [IsGerantOrAdmin],
-        "update": [IsGerantOrAdmin],
-        "partial_update": [IsGerantOrAdmin],
-        "destroy": [IsAdministrateur],
-        "default": [IsGerantOrAdmin],
-    }
+    permission_classes = [IsAuthenticated, CanManageCatalog]

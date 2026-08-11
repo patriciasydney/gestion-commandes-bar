@@ -1,0 +1,113 @@
+.
+├── core
+│   ├── constants
+│   │   ├── api_constants.dart
+│   │   └── api_constants.dart.bak
+│   ├── theme
+│   │   ├── app_colors.dart
+│   │   └── app_theme.dart
+│   └── utils
+│       ├── formatters.dart
+│       ├── formatters.dart.bak
+│       └── validators.dart
+├── main.dart
+├── models
+│   ├── achat.dart
+│   ├── caisse.dart
+│   ├── categorie.dart
+│   ├── client.dart
+│   ├── depense.dart
+│   ├── detail_achat.dart
+│   ├── detail_vente.dart
+│   ├── fournisseur.dart
+│   ├── journal_activite.dart
+│   ├── mouvement_stock.dart
+│   ├── paiement.dart
+│   ├── produit.dart
+│   ├── role.dart
+│   ├── stock.dart
+│   ├── utilisateur.dart
+│   └── vente.dart
+├── providers
+│   ├── auth_provider.dart
+│   ├── categorie_provider.dart
+│   ├── dashboard_provider.dart
+│   ├── dashboard_provider.dart.bak
+│   ├── panier_provider.dart
+│   ├── produit_provider.dart
+│   ├── stock_provider.dart
+│   └── utilisateur_provider.dart
+├── routes
+│   └── app_routes.dart
+├── screens
+│   ├── achats
+│   │   ├── achats_screen.dart
+│   │   └── achats_screen.dart.bak
+│   ├── auth
+│   │   └── login_screen.dart
+│   ├── categories
+│   │   └── categories_screen.dart
+│   ├── clients
+│   │   └── clients_screen.dart
+│   ├── dashboard
+│   │   ├── dashboard_screen.dart
+│   │   └── dashboard_screen.dart.bak
+│   ├── depenses
+│   │   ├── depenses_screen.dart
+│   │   └── depenses_screen.dart.bak
+│   ├── fournisseurs
+│   │   └── fournisseurs_screen.dart
+│   ├── parametres
+│   │   └── parametres_screen.dart
+│   ├── pos
+│   │   └── pos_screen.dart
+│   ├── produits
+│   │   ├── produit_form_screen.dart
+│   │   └── produits_screen.dart
+│   ├── rapports
+│   │   ├── rapports_screen.dart
+│   │   └── rapports_screen.dart.bak
+│   ├── stocks
+│   │   ├── stocks_screen.dart
+│   │   └── stocks_screen.dart.bak
+│   └── utilisateurs
+│       ├── utilisateurs_screen.dart
+│       └── utilisateurs_screen.dart.bak
+├── services
+│   ├── achat_service.dart
+│   ├── api_service.dart
+│   ├── api_service.dart.bak
+│   ├── auth_service.dart
+│   ├── categorie_service.dart
+│   ├── client_service.dart
+│   ├── dashboard_service.dart
+│   ├── depense_service.dart
+│   ├── detail_vente_service.dart
+│   ├── fournisseur_service.dart
+│   ├── mock_data.dart
+│   ├── mock_data.dart.bak
+│   ├── paiement_service.dart
+│   ├── produit_service.dart
+│   ├── rapport_service.dart
+│   ├── stock_service.dart
+│   ├── utilisateur_service.dart
+│   └── vente_service.dart
+├── struc.txt
+└── widgets
+    ├── common
+    │   ├── app_bottom_nav.dart
+    │   ├── app_button.dart
+    │   ├── app_drawer.dart
+    │   ├── app_drawer.dart.bak
+    │   ├── app_text_field.dart
+    │   └── loading_indicator.dart
+    ├── dashboard
+    │   ├── activity_tile.dart
+    │   ├── quick_access_button.dart
+    │   ├── sales_chart.dart
+    │   └── stat_card.dart
+    └── pos
+        ├── cart_item_tile.dart
+        └── product_card.dart
+
+26 directories, 84 files

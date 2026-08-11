@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/utils/formatters.dart';
+import '../../providers/dashboard_provider.dart';
+import '../../widgets/common/app_drawer.dart';
+import '../../widgets/common/app_bottom_nav.dart';
+import '../../widgets/dashboard/stat_card.dart';
+import '../../widgets/dashboard/sales_chart.dart';
+
+/// Écran : Tableau de bord — cahier des charges §10.3
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // On charge les données juste après le premier build (context prêt).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DashboardProvider>().chargerDonnees();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Tableau de bord")),
+      drawer: const AppDrawer(),
+      bottomNavigationBar: const AppBottomNav(currentRoute: '/dashboard'),
+      body: Consumer<DashboardProvider>(
+        builder: (context, provider, _) {
+          if (provider.chargement) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => provider.chargerDonnees(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Aujourd\'hui',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    Formatters.date(DateTime.now()),
+                    style: const TextStyle(color: AppColors.texteClair),
+                  ),
+                  const SizedBox(height: 16),
+
+                  if (provider.erreur != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.rouge.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.rouge),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: AppColors.rouge),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              provider.erreur!,
+                              style: const TextStyle(color: AppColors.rouge),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Grille de statistiques
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.5,
+                    children: [
+                      StatCard(
+                        titre: "Chiffre d'affaires",
+                        valeur: Formatters.montant(provider.chiffreAffairesJour),
+                        icone: Icons.payments,
+                        couleur: AppColors.vert,
+                      ),
+                      StatCard(
+                        titre: "Ventes du jour",
+                        valeur: provider.nombreVentes.toString(),
+                        icone: Icons.point_of_sale,
+                        couleur: AppColors.bleuFonce,
+                      ),
+                      StatCard(
+                        titre: "Produits en rupture",
+                        valeur: provider.produitsEnRupture.toString(),
+                        icone: Icons.warning_amber,
+                        couleur: provider.produitsEnRupture > 0
+                            ? AppColors.rouge
+                            : AppColors.vert,
+                      ),
+                      StatCard(
+                        titre: "Dépenses du jour",
+                        valeur: Formatters.montant(provider.depensesJour),
+                        icone: Icons.trending_down,
+                        couleur: AppColors.orange,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+                  Text(
+                    'Évolution des ventes',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 12),
+                  SalesChart(ventesParJour: provider.ventesParJour),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
