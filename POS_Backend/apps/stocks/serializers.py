@@ -78,6 +78,10 @@ class AjustementStockSerializer(serializers.Serializer):
             reference_operation=self.validated_data.get("reference_operation", ""),
         )
 
+        from apps.notifications.services import signaler_alerte_stock
+
+        signaler_alerte_stock(stock)
+
         enregistrer_journal(
             request,
             "stock.ajuster",

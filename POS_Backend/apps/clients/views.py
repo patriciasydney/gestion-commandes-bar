@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 
-from apps.utilisateurs.permissions import IsCaissier, IsGerantOrAdmin
+from apps.utilisateurs.permissions import IsClientOperator, IsGerantOrAdmin
 from apps.utils.mixins import RoleActionPermissionMixin
 
 from .models import Client
@@ -12,11 +12,11 @@ class ClientViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
     serializer_class = ClientSerializer
 
     role_permissions = {
-        "list": [IsCaissier],
-        "retrieve": [IsCaissier],
-        "create": [IsCaissier],
+        "list": [IsClientOperator],
+        "retrieve": [IsClientOperator],
+        "create": [IsClientOperator],
         "update": [IsGerantOrAdmin],
         "partial_update": [IsGerantOrAdmin],
         "destroy": [IsGerantOrAdmin],
-        "default": [IsCaissier],
+        "default": [IsClientOperator],
     }

@@ -1,4 +1,7 @@
-from rest_framework import viewsets
+from rest_framework import status, viewsets
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.utilisateurs.permissions import IsAdministrateur, IsGerantOrAdmin, IsOwnerOrAdmin
@@ -15,6 +18,15 @@ from .serializers import (
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+class AuthMeView(APIView):
+    """Profil de l'utilisateur authentifié — utilisé par le frontend après login."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(UtilisateurSerializer(request.user).data)
 
 
 class RoleViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):

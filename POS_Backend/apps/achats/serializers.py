@@ -95,6 +95,10 @@ class AchatCreateSerializer(serializers.ModelSerializer):
                 reference_operation=f"achat-{achat.id_achat}",
             )
 
+            from apps.notifications.services import signaler_alerte_stock
+
+            signaler_alerte_stock(stock)
+
             montant_total += quantite * prix_unitaire
 
         achat.montant_total = montant_total
@@ -132,6 +136,10 @@ class AchatAnnulationSerializer(serializers.Serializer):
                 utilisateur=achat.utilisateur,
                 reference_operation=f"annulation-achat-{achat.id_achat}",
             )
+
+            from apps.notifications.services import signaler_alerte_stock
+
+            signaler_alerte_stock(stock)
 
         achat.statut = Achat.STATUT_ANNULE
         achat.save(update_fields=["statut"])

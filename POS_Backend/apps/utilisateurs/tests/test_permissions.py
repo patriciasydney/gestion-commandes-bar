@@ -7,7 +7,9 @@ from apps.utilisateurs.permissions import (
     IsAdministrateur,
     IsAchatOperator,
     IsCaissier,
+    IsCaissierOrAdmin,
     IsGerantOrAdmin,
+    IsMagasinier,
     RoleNames,
 )
 
@@ -42,4 +44,24 @@ class PermissionsUnitTest(SimpleTestCase):
     def test_gerant_autorise_catalogue(self):
         self.assertTrue(
             IsGerantOrAdmin().has_permission(_fake_request(RoleNames.GERANT), None)
+        )
+
+    def test_gerant_refuse_ouverture_caisse(self):
+        self.assertFalse(
+            IsCaissierOrAdmin().has_permission(_fake_request(RoleNames.GERANT), None)
+        )
+
+    def test_caissier_autorise_ouverture_caisse(self):
+        self.assertTrue(
+            IsCaissierOrAdmin().has_permission(_fake_request(RoleNames.CAISSIER), None)
+        )
+
+    def test_gerant_autorise_ajustement_stock(self):
+        self.assertTrue(
+            IsMagasinier().has_permission(_fake_request(RoleNames.GERANT), None)
+        )
+
+    def test_magasinier_autorise_ajustement_stock(self):
+        self.assertTrue(
+            IsMagasinier().has_permission(_fake_request(RoleNames.MAGASINIER), None)
         )

@@ -73,3 +73,4 @@ curl -s http://localhost:8000/api/dashboard/summary/ -H "Authorization: Bearer T
 curl -s "http://localhost:8000/api/reports/ventes/?date_debut=2026-07-01&date_fin=2026-07-31" \
   -H "Authorization: Bearer TOKEN"
 ```
+

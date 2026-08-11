@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.reports",
     "apps.notifications",
+    "apps.parametres",
 ]
 
 MIDDLEWARE = [
@@ -122,9 +123,12 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 # Flutter Web utilise un port dynamique (ex. localhost:54321).
+# Inclut aussi les IP privées LAN (10.x / 192.168.x) pour les tests réseau.
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost:\d+$",
     r"^http://127\.0\.0\.1:\d+$",
+    r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$",
+    r"^http://192\.168\.\d{1,3}\.\d{1,3}:\d+$",
 ]
 CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").lower() in (
     "true",

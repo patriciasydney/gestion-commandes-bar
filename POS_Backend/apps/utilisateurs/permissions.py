@@ -54,15 +54,36 @@ class IsGerantOrAdmin(BaseRolePermission):
 
 
 class IsCaissier(BaseRolePermission):
+    """Ventes / paiements — caissier, gérant (supervision) et admin."""
     allowed_roles = (RoleNames.ADMINISTRATEUR, RoleNames.GERANT, RoleNames.CAISSIER)
+
+
+class IsClientOperator(BaseRolePermission):
+    """Clients — caissier, serveur, gérant, administrateur."""
+    allowed_roles = (
+        RoleNames.ADMINISTRATEUR,
+        RoleNames.GERANT,
+        RoleNames.CAISSIER,
+        RoleNames.SERVEUR,
+    )
 
 
 class IsCaissierStrict(BaseRolePermission):
     allowed_roles = (RoleNames.CAISSIER,)
 
 
+class IsCaissierOrAdmin(BaseRolePermission):
+    """Ouverture / fermeture de caisse — réservé caissier et administrateur (pas le gérant)."""
+    allowed_roles = (RoleNames.ADMINISTRATEUR, RoleNames.CAISSIER)
+
+
 class IsMagasinier(BaseRolePermission):
-    allowed_roles = (RoleNames.ADMINISTRATEUR, RoleNames.MAGASINIER)
+    """Ajustements stock — magasinier, gérant (contrôle) et admin."""
+    allowed_roles = (
+        RoleNames.ADMINISTRATEUR,
+        RoleNames.GERANT,
+        RoleNames.MAGASINIER,
+    )
 
 
 class IsMagasinierStrict(BaseRolePermission):

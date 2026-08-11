@@ -84,7 +84,11 @@ Voir aussi : [INTEGRATION_EQUIPE.md](./INTEGRATION_EQUIPE.md)
 | `/api/dashboard/summary/` | dashboard (Sindiely) |
 | `/api/reports/ventes/`, `/produits/`, `/depenses/`, `/achats/` | reports (Sindiely) |
 | `/api/notifications/` | notifications (Sindiely) |
+| `GET/PUT /api/parametres/` | paramètres système |
+| `GET/POST /api/parametres/sauvegardes/` | sauvegardes (admin) |
 | `/api/docs/`, `/api/schema/` | Swagger OpenAPI |
+
+Comptes de test : voir [`../README_DEMARRAGE.md`](../README_DEMARRAGE.md).
 
 ## Intégration Flutter
 

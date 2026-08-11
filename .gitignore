@@ -27,6 +27,10 @@ venv/
 env/
 ENV/
 
+# --- Sauvegardes applicatives ---
+POS_Backend/backups/
+backups/
+
 # --- Django ---
 *.log
 local_settings.py

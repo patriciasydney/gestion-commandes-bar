@@ -12,7 +12,10 @@
 INSERT INTO roles (nom_role, description, actif) VALUES
 ('Administrateur', 'Accès complet à la configuration et à la supervision du système', TRUE),
 ('Gérant',         'Supervision commerciale, produits, fournisseurs et stocks',          TRUE),
-('Caissier',       'Enregistrement des ventes, paiements et gestion de caisse',          TRUE);
+('Caissier',       'Enregistrement des ventes, paiements et gestion de caisse',          TRUE),
+('Magasinier',     'Gestion physique des stocks, inventaires et approvisionnements',     TRUE),
+('Serveur',        'Prise de commandes clients et transmission au caissier',              TRUE),
+('Comptable',      'Consultation des rapports financiers, dépenses et statistiques',     TRUE);
 
 -- ============================================================================
 -- 2. CATÉGORIES DE PRODUITS
@@ -52,7 +55,16 @@ INSERT INTO utilisateurs (nom, prenom, telephone, email, nom_utilisateur, mot_de
     (SELECT id_role FROM roles WHERE nom_role = 'Gérant')),
 ('Biya',   'Paul',    '+237690333333', 'paul.biya.k@possarl.cm',   'caissier1',
     '$2b$12$FAKEHASHCAISSIER000000000000000000000000000000000', 'actif',
-    (SELECT id_role FROM roles WHERE nom_role = 'Caissier'));
+    (SELECT id_role FROM roles WHERE nom_role = 'Caissier')),
+('Owona',  'Marie',   '+237690444444', 'marie.owona@possarl.cm',   'magasinier1',
+    '$2b$12$FAKEHASHMAGASIN0000000000000000000000000000000000', 'actif',
+    (SELECT id_role FROM roles WHERE nom_role = 'Magasinier')),
+('Essomba','Jean',    '+237690555555', 'jean.essomba@possarl.cm',  'serveur1',
+    '$2b$12$FAKEHASHSERVEUR0000000000000000000000000000000000', 'actif',
+    (SELECT id_role FROM roles WHERE nom_role = 'Serveur')),
+('Kamga',  'Claire',  '+237690666666', 'claire.kamga@possarl.cm',  'comptable1',
+    '$2b$12$FAKEHASHCOMPTA00000000000000000000000000000000000', 'actif',
+    (SELECT id_role FROM roles WHERE nom_role = 'Comptable'));
 
 -- ============================================================================
 -- 6. PRODUITS (15 articles réalistes)

@@ -1,3 +1,4 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,9 +6,12 @@ from rest_framework.response import Response
 from apps.journal_activite.services import enregistrer_journal
 from apps.utilisateurs.permissions import (
     IsCaissier,
+    IsCaissierOrAdmin,
     IsGerantOrAdmin,
     IsOwnerOrAdmin,
     IsVenteOperator,
+    RoleNames,
+    get_user_role_name,
 )
 from apps.utils.mixins import RoleActionPermissionMixin
 
@@ -17,6 +21,7 @@ from .serializers import (
     CaisseSerializer,
     VenteAnnulationSerializer,
     VenteCreateSerializer,
+    VenteEncaissementSerializer,
     VenteSerializer,
 )
 
@@ -28,17 +33,17 @@ class CaisseViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
     role_permissions = {
         "list": [IsVenteOperator],
         "retrieve": [IsVenteOperator],
-        "create": [IsCaissier],
+        "create": [IsCaissierOrAdmin],
         "update": [IsGerantOrAdmin],
         "partial_update": [IsGerantOrAdmin],
         "destroy": [IsGerantOrAdmin],
-        "fermer": [IsCaissier],
+        "fermer": [IsCaissierOrAdmin],
         "default": [IsVenteOperator],
     }
 
     def get_permissions(self):
         if self.action == "fermer":
-            return [IsCaissier(), IsOwnerOrAdmin()]
+            return [IsCaissierOrAdmin(), IsOwnerOrAdmin()]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -67,29 +72,44 @@ class CaisseViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
 
 
 class VenteViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
-    queryset = Vente.objects.all().order_by("-date_vente")
+    queryset = Vente.objects.all().select_related(
+        "utilisateur", "client", "caisse"
+    ).prefetch_related("details", "paiements").order_by("-date_vente")
     serializer_class = VenteSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["statut", "caisse", "utilisateur"]
 
     role_permissions = {
         "list": [IsVenteOperator],
         "retrieve": [IsVenteOperator],
-        "create": [IsCaissier],
+        "create": [IsVenteOperator],
         "update": [IsGerantOrAdmin],
         "partial_update": [IsGerantOrAdmin],
         "destroy": [IsGerantOrAdmin],
-        "annuler": [IsGerantOrAdmin],
+        "annuler": [IsVenteOperator],
+        "encaisser": [IsCaissier],
         "default": [IsVenteOperator],
     }
 
     def get_serializer_class(self):
         if self.action == "create":
             return VenteCreateSerializer
+        if self.action == "encaisser":
+            return VenteEncaissementSerializer
         return VenteSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["request"] = self.request
         return context
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        role = get_user_role_name(self.request.user)
+        # Le serveur ne voit que ses propres commandes/ventes.
+        if role == RoleNames.SERVEUR:
+            qs = qs.filter(utilisateur=self.request.user)
+        return qs
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -98,12 +118,37 @@ class VenteViewSet(RoleActionPermissionMixin, viewsets.ModelViewSet):
         return Response(VenteSerializer(vente).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])
+    def encaisser(self, request, pk=None):
+        vente = self.get_object()
+        serializer = VenteEncaissementSerializer(
+            data=request.data,
+            context={"vente": vente, "request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        vente.refresh_from_db()
+        return Response(VenteSerializer(vente).data)
+
+    @action(detail=True, methods=["post"])
     def annuler(self, request, pk=None):
         vente = self.get_object()
+        role = get_user_role_name(request.user)
+        if role == RoleNames.SERVEUR and vente.utilisateur_id != request.user.id:
+            return Response(
+                {"detail": "Vous ne pouvez annuler que vos propres commandes."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if role == RoleNames.SERVEUR and vente.statut != Vente.STATUT_EN_ATTENTE:
+            return Response(
+                {"detail": "Seules les commandes en attente peuvent être annulées."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = VenteAnnulationSerializer(
             data={},
             context={"vente": vente, "vente_request": request},
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        vente.refresh_from_db()
         return Response(VenteSerializer(vente).data)

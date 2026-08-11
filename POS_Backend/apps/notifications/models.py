@@ -11,6 +11,7 @@ class Notification(models.Model):
         ("stock_faible", "Stock faible"),
         ("rupture", "Rupture de stock"),
         ("caisse_ouverte", "Caisse non clôturée"),
+        ("commande_attente", "Commande en attente"),
     ]
 
     type = models.CharField(max_length=30, choices=TYPE_CHOICES)
